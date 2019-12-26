@@ -14,6 +14,8 @@ class Settings(commands.Cog):
 		self.bot = bot
 		#self.default_settings = defaultdict(lambda :False) #store this on db, with a better default?
 		self.default_settings = {"staffPing":{"enabled":False}}
+	
+	
 	async def get(self,guild_id,cogName=None):
 		d = await utils.db.findOne("settings",{"guild_id":guild_id})
 		if d == None:
