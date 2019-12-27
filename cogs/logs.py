@@ -48,8 +48,8 @@ class logs(commands.Cog):
 		settings = await self.bot.cogs["Settings"].get(before.guild.id,"logs")
 		if not settings['enabled']:
 			return
-		
-		e = member_embed(after,color=discord.Colour.purple)
+		member_update_log_channel = after.guild.get_channel(settings["member_update_log_channel"])
+		e = member_embed(after,color=discord.Colour.purple())
 
 
 		if before.status != after.status:
@@ -61,9 +61,29 @@ class logs(commands.Cog):
 			e.add_field(name="Old",value=f"{before.display_name}",inline=False)
 			e.add_field(name="new",value=f"{after.display_name}",inline=False)
 		elif before.roles != after.roles:
-			e = await search_entry(after.guild,after,AuditLogAction.member_role_update) #ojo, que puede ganar/perder muchos roles en poco tiempo!
+			pass #TODO roles
+		
+		await member_update_log_channel.send(embed=e)
+
+	@commands.Cog.listener()
+	async def on_user_update(self,before, after):
+		settings = await self.bot.cogs["Settings"].get(before.guild.id,"logs")
+		if not settings['enabled']:
+			return
+		member_update_log_channel = after.guild.get_channel(settings["member_update_log_channel"])
+		e = member_embed(after,color=discord.Colour.purple())
 
 
+		if before.avatar_url != after.avatar_url:
+			e.title = "Avatar Change"
+			e.add_field(name="Old",value=f"{before.avatar_url}",inline=False)
+			e.add_field(name="new",value=f"{after.avatar_url}",inline=False)
+		elif before.display_name != after.display_name:
+			e.title = "Name Change"
+			e.add_field(name="Old",value=f"{before.display_name}",inline=False)
+			e.add_field(name="new",value=f"{after.display_name}",inline=False)
+		
+		await member_update_log_channel.send(embed=e)
 
 
 
