@@ -9,6 +9,11 @@ async def findOne(collection,query):
 def client():
 	return db
 
+async def find(collection,query):
+	cursor =  db[collection].find(query)
+	data = await cursor.to_list(length=999999999)
+	return data
+
 async def updateOne(collection, query, update):
 	update = await db[collection].update_one(query, update,upsert=True)
 	return update
@@ -22,17 +27,17 @@ async def deleteOne(collection,query):
 	return found
 
 
-async def getIndex(collection,key,query):
-	cursor = db[collection].find({key:query})
-	index = await cursor.to_list(length=None)
-	index = len(index)
-	return index + 1
+# async def getIndex(collection,key,query):
+# 	cursor = db[collection].find({key:query})
+# 	index = await cursor.to_list(length=None)
+# 	index = len(index)
+# 	return index + 1
 
-async def getLeaderboard(collection,key):
-	cursor = db[collection].find({}).sort(key,-1)
-	data = []
-	for document in await cursor.to_list(length=20):
-		data.append(document)
-	return data
+# async def getLeaderboard(collection,key):
+# 	cursor = db[collection].find({}).sort(key,-1)
+# 	data = []
+# 	for document in await cursor.to_list(length=20):
+# 		data.append(document)
+# 	return data
 
 

@@ -7,7 +7,6 @@ import datetime
 class logs(commands.Cog):
 	def __init__(self,bot):
 		self.bot = bot
-		self.open_cases = []
 		self.invites = {}
 		self.crawler = self.bot.loop.create_task(self.crawl_invites())
 
@@ -26,8 +25,10 @@ class logs(commands.Cog):
 					return "logs: join log channel not found"
 				member_update_log_channel = guild.get_channel(settings["member_update_log_channel"])
 				if member_update_log_channel == None:
-					return "logs: member_update log channel not found"			
-
+					return "logs: member update log channel not found"			
+				text_chat_log_channel = guild.get_channel(settings["text_chat_log_channel"])
+				if text_chat_log_channel == None:
+					return "logs: text chat log channel not found"		
 
 				# pingRole = [r for r in guild.roles if r.id == settings['role_id']]
 				# if len(pingRole) == 0:
@@ -41,7 +42,61 @@ class logs(commands.Cog):
 		
 		return True
 		
-	
+	#on_message_edit(before, after)
+
+
+	@commands.Cog.listener()
+	async def on_message_edit(self,before, after):
+		settings = await self.bot.cogs["Settings"].get(after.guild.id,"logs")
+		if not settings['enabled']:
+			return
+
+		text_chat_log_channel = after.guild.get_channel(settings["text_chat_log_channel"])
+
+		e = member_embed(after.author,color=discord.Colour.gold(),title="Message Deleted")
+
+		post_separate = False
+		if len(before.content) < 1000 and len(after.content) < 1000:
+			e.add_field(name="Before",value=f"{before.content}",inline=False)
+			e.add_field(name="After",value=f"{after.content}",inline=False)
+		else:
+			e.add_field(name="Messages too long, will be posted below",value="** **",inline =False)
+			post_separate = True
+		e.add_field(name="Jump Link",value=f"[here]({after.jump_url})")
+
+		await text_chat_log_channel.send(embed=e)
+		if post_separate:
+			await text_chat_log_channel.send("Before:")
+			await text_chat_log_channel.send(f"```{before.content}```")
+			await text_chat_log_channel.send("After:")
+			await text_chat_log_channel.send(f"```{after.content}```")
+
+	@commands.Cog.listener()
+	async def on_message_delete(self,message):
+		settings = await self.bot.cogs["Settings"].get(message.guild.id,"logs")
+		if not settings['enabled']:
+			return
+		
+		text_chat_log_channel = message.guild.get_channel(settings["text_chat_log_channel"])
+
+		e = member_embed(message.author,color=discord.Colour.dark_orange(),title="Message Deleted")
+
+		post_separate = False
+		if len(message.content) < 1000:
+			e.add_field(name="Message",value=f"{message.content}",inline=False)
+		else:
+			e.add_field(name="Message",value=f"Message too long, will be posted below this",inline=False)
+			post_separate = True
+
+		
+		await text_chat_log_channel.send(embed=e)
+		if post_separate:
+			await text_chat_log_channel.send(f"```{message.content}```")
+
+
+
+
+
 
 	@commands.Cog.listener()
 	async def on_member_update(self,before, after):
@@ -50,20 +105,18 @@ class logs(commands.Cog):
 			return
 		member_update_log_channel = after.guild.get_channel(settings["member_update_log_channel"])
 		e = member_embed(after,color=discord.Colour.purple())
+		post= False
 
 
-		if before.status != after.status:
-			e.title = "Status Change"
-			e.add_field(name="Old",value=f"{before.status}",inline=False)
-			e.add_field(name="new",value=f"{after.status}",inline=False)
-		elif before.display_name != after.display_name:
+		if before.display_name != after.display_name:
 			e.title = "Name Change"
 			e.add_field(name="Old",value=f"{before.display_name}",inline=False)
 			e.add_field(name="new",value=f"{after.display_name}",inline=False)
+			post = True
 		elif before.roles != after.roles:
 			pass #TODO roles
-		
-		await member_update_log_channel.send(embed=e)
+		if post:
+			await member_update_log_channel.send(embed=e)
 
 	@commands.Cog.listener()
 	async def on_user_update(self,before, after):
@@ -73,17 +126,19 @@ class logs(commands.Cog):
 		member_update_log_channel = after.guild.get_channel(settings["member_update_log_channel"])
 		e = member_embed(after,color=discord.Colour.purple())
 
-
+		post = False
 		if before.avatar_url != after.avatar_url:
 			e.title = "Avatar Change"
 			e.add_field(name="Old",value=f"{before.avatar_url}",inline=False)
 			e.add_field(name="new",value=f"{after.avatar_url}",inline=False)
+			post = True
 		elif before.display_name != after.display_name:
 			e.title = "Name Change"
 			e.add_field(name="Old",value=f"{before.display_name}",inline=False)
 			e.add_field(name="new",value=f"{after.display_name}",inline=False)
-		
-		await member_update_log_channel.send(embed=e)
+			post = True
+		if post:
+			await member_update_log_channel.send(embed=e)
 
 
 
