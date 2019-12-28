@@ -46,7 +46,11 @@ class reactionRoles(commands.Cog):
 	
 	async def getSettings(self,serverid,cogOnly=True):
 		s = await utils.db.findOne('settings',{'guild_id':serverid})
-		return s['reactionRoles']
+		try:
+			res = s['reactionRoles']
+		except (KeyError,TypeError):
+			res = {"enabled":False}
+		return res
 
 	@commands.has_permissions(administrator=True)
 	@commands.command()
@@ -148,10 +152,13 @@ class reactionRoles(commands.Cog):
 	async def on_raw_reaction_remove(self,payload):
 		
 		g,c,m,user,emoji = await self.parse_payload(payload)
-
-		if user.bot:
+		try:
+			if user.bot:
+				return
+		except AttributeError:
 			return
-		
+
+
 		s = await self.getSettings(g.id)
 		
 		if not s['enabled']:

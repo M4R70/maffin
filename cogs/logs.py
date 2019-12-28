@@ -9,49 +9,95 @@ class logs(commands.Cog):
 		self.bot = bot
 		self.invites = {}
 		self.crawler = self.bot.loop.create_task(self.crawl_invites())
+		self.valid_channels = [
+			"vc_log_channel",
+			"ban_log_channel",
+			"join_log_channel",
+			"member_update_log_channel",
+			"text_chat_log_channel",
+			"mute_log_channel"
+			]
 
+
+
+			
 
 	def validate_settings(self,settings,guild):
 		try: 
 			if settings["enabled"]:
-				vc_log_channel = guild.get_channel(settings["vc_log_channel"])
-				if vc_log_channel == None:
-					return "logs: vc log channel not found"
-				ban_log_channel = guild.get_channel(settings["ban_log_channel"])
-				if ban_log_channel == None:
-					return "logs: ban log channel not found"					
-				join_log_channel = guild.get_channel(settings["join_log_channel"])
-				if join_log_channel == None:
-					return "logs: join log channel not found"
-				member_update_log_channel = guild.get_channel(settings["member_update_log_channel"])
-				if member_update_log_channel == None:
-					return "logs: member update log channel not found"			
-				text_chat_log_channel = guild.get_channel(settings["text_chat_log_channel"])
-				if text_chat_log_channel == None:
-					return "logs: text chat log channel not found"		
+				
+				try:
+					channels = settings['channels']
+				except KeyError:
+					return f"logs, Missing field Channels"
 
-				# pingRole = [r for r in guild.roles if r.id == settings['role_id']]
-				# if len(pingRole) == 0:
-				# 	return "staffPing: role not found"
-				# pingChannel = guild.get_channel(settings["channel_id"])
-				# if pingChannel == None:
-				# 	return "staffPing: channel not found"
+				for channel in self.valid_channels:
+					try:
+						menu_entry = settings["channels"][channel]
+						if not menu_entry == "disabled":
+							actual_channel = guild.get_channel(settings["channels"][menu_entry])
+							if actual_channel == None:
+								return f"logs: {channel} not found"
+					except KeyError:
+						pass
+					
+
+
+				# vc_log_channel = guild.get_channel(settings["channels"]["vc_log_channel"])
+				# if vc_log_channel == None:
+				# 	return "logs: vc log channel not found"
+				# ban_log_channel = guild.get_channel(settings["channels"]["ban_log_channel"])
+				# if ban_log_channel == None:
+				# 	return "logs: ban log channel not found"					
+				# join_log_channel = guild.get_channel(settings["channels"]["join_log_channel"])
+				# if join_log_channel == None:
+				# 	return "logs: join log channel not found"
+				# member_update_log_channel = guild.get_channel(settings["channels"]["member_update_log_channel"])
+				# if member_update_log_channel == None:
+				# 	return "logs: member update log channel not found"			
+				# text_chat_log_channel = guild.get_channel(settings["channels"]["text_chat_log_channel"])
+				# if text_chat_log_channel == None:
+				# 	return "logs: text chat log channel not found"		
 		
 		except KeyError as e:
-			return f"logs, Missing field {e}"
+			return f"logs: Missing field: enabled"
 		
 		return True
 		
 	#on_message_edit(before, after)
 
+	async def get_channel_if_enabled(self,guild,channel_name):
+		settings = await self.bot.cogs["Settings"].get(guild.id,"logs")
+		try:
+			if not settings['enabled']:
+				return False
+		except (ValueError, KeyError):
+			return False
+		
+		try:
+			if settings["channels"][channel_name] == "disabled":
+				return False
+		except KeyError:
+			return False
+		
+		else:
+			actual_channel = guild.get_channel(settings["channels"][channel_name])
+			if actual_channel == None:
+				return False
+			else:
+				return actual_channel
+
+
 
 	@commands.Cog.listener()
 	async def on_message_edit(self,before, after):
-		settings = await self.bot.cogs["Settings"].get(after.guild.id,"logs")
-		if not settings['enabled']:
+		channel = await self.get_channel_if_enabled(before.guild,"text_chat_log_channel")
+		if channel == False:
 			return
 
-		text_chat_log_channel = after.guild.get_channel(settings["text_chat_log_channel"])
+
+
+
 
 		e = member_embed(after.author,color=discord.Colour.gold(),title="Message Deleted")
 
@@ -64,20 +110,23 @@ class logs(commands.Cog):
 			post_separate = True
 		e.add_field(name="Jump Link",value=f"[here]({after.jump_url})")
 
-		await text_chat_log_channel.send(embed=e)
+		try:
+			await channel.send(embed=e)
+		except:
+			pass #YOLO
+		 
 		if post_separate:
-			await text_chat_log_channel.send("Before:")
-			await text_chat_log_channel.send(f"```{before.content}```")
-			await text_chat_log_channel.send("After:")
-			await text_chat_log_channel.send(f"```{after.content}```")
+			await channel.send("Before:")
+			await channel.send(f"```{before.content}```")
+			await channel.send("After:")
+			await channel.send(f"```{after.content}```")
 
 	@commands.Cog.listener()
 	async def on_message_delete(self,message):
-		settings = await self.bot.cogs["Settings"].get(message.guild.id,"logs")
-		if not settings['enabled']:
+		channel = await self.get_channel_if_enabled(message.guild,"text_chat_log_channel")
+		if channel == False:
 			return
 		
-		text_chat_log_channel = message.guild.get_channel(settings["text_chat_log_channel"])
 
 		e = member_embed(message.author,color=discord.Colour.dark_orange(),title="Message Deleted")
 
@@ -89,9 +138,9 @@ class logs(commands.Cog):
 			post_separate = True
 
 		
-		await text_chat_log_channel.send(embed=e)
+		await channel.send(embed=e)
 		if post_separate:
-			await text_chat_log_channel.send(f"```{message.content}```")
+			await channel.send(f"```{message.content}```")
 
 
 
@@ -100,10 +149,11 @@ class logs(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_member_update(self,before, after):
-		settings = await self.bot.cogs["Settings"].get(before.guild.id,"logs")
-		if not settings['enabled']:
+		channel = await self.get_channel_if_enabled(before.guild,"member_update_log_channel")
+		if channel == False:
 			return
-		member_update_log_channel = after.guild.get_channel(settings["member_update_log_channel"])
+		
+		
 		e = member_embed(after,color=discord.Colour.purple())
 		post= False
 
@@ -116,29 +166,31 @@ class logs(commands.Cog):
 		elif before.roles != after.roles:
 			pass #TODO roles
 		if post:
-			await member_update_log_channel.send(embed=e)
+			await channel.send(embed=e)
 
-	@commands.Cog.listener()
-	async def on_user_update(self,before, after):
-		settings = await self.bot.cogs["Settings"].get(before.guild.id,"logs")
-		if not settings['enabled']:
-			return
-		member_update_log_channel = after.guild.get_channel(settings["member_update_log_channel"])
-		e = member_embed(after,color=discord.Colour.purple())
+	# @commands.Cog.listener()
+	# async def on_user_update(self,before, after):
+	# 	channel = await self.get_channel_if_enabled(before.guild,"member_update_log_channel")
+	# 	if channel == False:
+	# 		return
 
-		post = False
-		if before.avatar_url != after.avatar_url:
-			e.title = "Avatar Change"
-			e.add_field(name="Old",value=f"{before.avatar_url}",inline=False)
-			e.add_field(name="new",value=f"{after.avatar_url}",inline=False)
-			post = True
-		elif before.display_name != after.display_name:
-			e.title = "Name Change"
-			e.add_field(name="Old",value=f"{before.display_name}",inline=False)
-			e.add_field(name="new",value=f"{after.display_name}",inline=False)
-			post = True
-		if post:
-			await member_update_log_channel.send(embed=e)
+
+
+	# 	e = member_embed(after,color=discord.Colour.purple())
+
+	# 	post = False
+	# 	if before.avatar_url != after.avatar_url:
+	# 		e.title = "Avatar Change"
+	# 		e.add_field(name="Old",value=f"{before.avatar_url}",inline=False)
+	# 		e.add_field(name="new",value=f"{after.avatar_url}",inline=False)
+	# 		post = True
+	# 	elif before.display_name != after.display_name:
+	# 		e.title = "Name Change"
+	# 		e.add_field(name="Old",value=f"{before.display_name}",inline=False)
+	# 		e.add_field(name="new",value=f"{after.display_name}",inline=False)
+	# 		post = True
+	# 	if post:
+	# 		await channel.send(embed=e)
 
 
 
@@ -146,25 +198,59 @@ class logs(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_voice_state_update(self,member, before, after):
-		settings = await self.bot.cogs["Settings"].get(member.guild.id,"logs")
-		if not settings['enabled']:
+		channel = await self.get_channel_if_enabled(member.guild,"vc_log_channel")
+		if channel == False:
 			return
-		e = member_embed(member)
-		e.title = voice_state_diff(before,after)
-		
-		vc_log_channel = member.guild.get_channel(settings["vc_log_channel"])
-		await vc_log_channel.send(embed=e)
+
+
+		diff = voice_state_diff(before,after)
+
+		if diff == None:
+			return
+
+		elif diff == "Muted" or diff == "Unmuted":
+			print("holis")
+			channel = await self.get_channel_if_enabled(member.guild,"mute_log_channel")
+			if channel == False:
+				return
+			
+			entry = await search_entry(member.guild,member,discord.AuditLogAction.member_update)
+
+			if diff == "Muted":
+				color = discord.Colour.orange()
+			else:
+				color = discord.Colour.gold()
+
+			e = None #creo que no hace falta
+			if entry == "fail":
+				e = member_embed(member,title=f"{diff}",color=color)
+				e.add_field(name="Moderator",value="failed to obtain")
+			else:
+				e = member_embed(member,title=f"{diff}",color=color,entry=entry)
+			
+			e.remove_field(3) #rolfmao
+			await channel.send(embed=e)
+			
+			return
+
+		else:
+
+			e = member_embed(member)
+
+			e.title = diff
+			
+			await channel.send(embed=e)
 
 
 	@commands.Cog.listener()
-	async def on_member_ban(self, guild, user):
-		settings = await self.bot.cogs["Settings"].get(guild.id,"logs")
-		if not settings['enabled']:
+	async def on_member_ban(self, guild, user): #esto es ilegible
+		channel = await self.get_channel_if_enabled(guild,"ban_log_channel")
+		if channel == False:
 			return
 		
 		entry = await search_entry(guild,user,discord.AuditLogAction.ban)
 		
-		ban_log_channel = guild.get_channel(settings["ban_log_channel"])
+		
 		e = None
 		if entry == "fail":
 			e = member_embed(user,title="BAN",color=discord.Colour.red())
@@ -173,17 +259,17 @@ class logs(commands.Cog):
 			e = member_embed(user,title="BAN",color=discord.Colour.red(),entry=entry)
 			if entry.reason == None:
 				pass #TODO romperle las bolas al mod para que agregue razon
-		await ban_log_channel.send(embed=e)
+		await channel.send(embed=e)
 
 
 	@commands.Cog.listener()
 	async def on_member_unban(self,guild, user):
-		settings = await self.bot.cogs["Settings"].get(guild.id,"logs")
-		if not settings['enabled']:
+		channel = await self.get_channel_if_enabled(guild,"ban_log_channel")
+		if channel == False:
 			return
 		
 		entry = await search_entry(guild,user,discord.AuditLogAction.unban)
-		ban_log_channel = guild.get_channel(settings["ban_log_channel"])
+		
 
 		if entry == "fail":
 			e = member_embed(user,title="UNBAN",color=discord.Colour.green())
@@ -191,30 +277,31 @@ class logs(commands.Cog):
 		else:
 			e = member_embed(user,title="UNBAN",color=discord.Colour.green(),entry=entry,no_reason=True)
 
-		await ban_log_channel.send(embed=e)
+		await channel.send(embed=e)
 
 	@commands.Cog.listener()
 	async def on_member_remove(self,member):
-		settings = await self.bot.cogs["Settings"].get(member.guild.id,"logs")
-		if not settings['enabled']:
+		channel = await self.get_channel_if_enabled(member.guild,"join_log_channel")
+		if channel == False:
 			return
+
 		nothing = "** **"
-		join_log_channel = member.guild.get_channel(settings["join_log_channel"])
+
 		e = discord.Embed()
 		e.colour = discord.Colour.dark_grey()
 		e.title = f"{member}"
 		e.set_author(name="Member Left",icon_url=member.avatar_url)	
 		e.add_field(name="ID:",value=member.id)
 
-		await join_log_channel.send(embed=e)
+		await channel.send(embed=e)
 
 	@commands.Cog.listener()
 	async def on_member_join(self,member):
-		settings = await self.bot.cogs["Settings"].get(member.guild.id,"logs")
-		if not settings['enabled']:
+		channel = await self.get_channel_if_enabled(member.guild,"join_log_channel")
+		if channel == False:
 			return
 
-		join_log_channel = member.guild.get_channel(settings["join_log_channel"])
+		
 
 		possible_invites = await self.find_possible_invites(member.guild)
 		nothing = "** **"
@@ -239,7 +326,7 @@ class logs(commands.Cog):
 		else:
 			e.add_field(name="Invite could not be retrieved",value=nothing,inline=False)
 
-		await join_log_channel.send(embed=e)
+		await channel.send(embed=e)
 
 
 	async def crawl_invites(self):
@@ -295,6 +382,13 @@ async def search_entry(guild,target_user,action):
 
 
 def voice_state_diff(before,after):
+
+	if before.mute and not after.mute:
+		return "Unuted"
+	elif not before.mute and after.mute:
+		return "Muted"
+
+
 	if before.channel != after.channel:
 		if before.channel == None or before.afk:
 			return f"connected to {after.channel.name}"
@@ -302,6 +396,8 @@ def voice_state_diff(before,after):
 			return f"disconnected from {before.channel}"
 		else:
 			return f"moved from {before.channel.name} to {after.channel.name}"
+	else:
+		return None
 
 
 

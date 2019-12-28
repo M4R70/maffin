@@ -16,6 +16,7 @@ class analytics(commands.Cog):
 	def __init__(self,bot):
 		self.bot = bot
 		self.converter = commands.MemberConverter()
+		self.dynamic_connection_data = {}
 	
 	def validate_settings(self,settings,guild):
 			try: 
@@ -27,6 +28,57 @@ class analytics(commands.Cog):
 
 			return True
 
+	
+
+#moved, disconnected, connected
+
+	@commands.Cog.listener()
+	async def on_voice_state_update(self,member, before, after):
+		settings = await self.bot.cogs["Settings"].get(member.guild.id,"logs")
+		if not settings['enabled']:
+			return
+		
+		action = voice_state_diff(before,after)
+
+
+		now = datetime.datetime.now()
+		if action == "connected":
+			await self.log_connection(member,now)
+		elif action == "disconnected":
+			await self.log_disconnection(member,before.channel,now)
+		elif action == "move":
+			await self.log_disconnection(member,before.channel,now)
+			await self.log_connection(member,now)
+			
+
+
+	async def log_connection(self,member,now):
+		try:
+			self.dynamic_connection_data[member.guild.id][member.id] = now
+		except KeyError:
+			self.dynamic_connection_data[member.guild.id] = {}
+			self.dynamic_connection_data[member.guild.id][member.id] = now
+
+	async def log_disconnection(self,member,channel,now):
+		try:
+			start = self.dynamic_connection_data[member.guild.id][member.id]
+			del self.dynamic_connection_data[member.guild.id][member.id]
+		except KeyError:
+			return
+
+
+		connection_time = now - start
+
+		d = {
+			"member_id" : member.id,
+			"voice_channel id" : channel.id,
+			"guild_id" : member.guild.id,
+			"length_mins" : connection_time.total_seconds() / 60,
+			"datetime" : now
+		}
+
+		await utils.db.insertOne(f"analytics.voice.a{member.guild.id}",d)
+	
 	@commands.Cog.listener()
 	async def on_message(self,message):
 		
@@ -35,7 +87,7 @@ class analytics(commands.Cog):
 			return        
 		
 		data = {
-			"author_id" : message.author.id,
+			"member_id" : message.author.id,
 			"text_channel_id" : message.channel.id ,
 			"guild_id" : message.guild.id,
 			"length" : len(message.content) ,
@@ -67,12 +119,12 @@ class analytics(commands.Cog):
 				"$lt" : now,
 				"$gte" : now - timedelta.Timedelta(days=n)
 			},
-			"author_id" : member.id,
+			"member_id" : member.id,
 			"guild_id" : member.guild.id
-
 		}
 
-		data = await utils.db.find(f"analytics.text.a{member.guild.id}",query)
+		text_data = await utils.db.find(f"analytics.text.a{member.guild.id}",query)
+		voice_data = await utils.db.find(f"analytics.voice.a{member.guild.id}",query)
 
 		days = [now.date()]
 
@@ -84,17 +136,22 @@ class analytics(commands.Cog):
 
 
 
-		columns=['#Messages','#Characters',"#qj","#qn"]
+		columns=['#Messages','#Characters',"#qj","#qn","#VcMins"]
 		df = pd.DataFrame(index=days)
 		for c in columns:
 			df[c] = 0
 		
-		for datapoint in data:
+
+		for datapoint in voice_data:
+			day = datapoint['datetime'].date()
+			df["#VcMins"][day] += datapoint["length_mins"]
+
+
+		for datapoint in text_data:
 			day = datapoint['datetime'].date()
 			
 			df['#Messages'][day] += 1
 
-			
 			df['#Characters'][day] += datapoint['length']
 			
 			if datapoint['qn']:
@@ -103,38 +160,15 @@ class analytics(commands.Cog):
 			elif datapoint['qj']:
 				df['#qj'][day] += 1
 
-			
 
-		
+		bar_plot(df[["#Characters","#VcMins"]],"g1.png",palette="hls")
+		bar_plot(df[["#qn","#qj"]],"g2.png",palette="Set2")
 
+		with open('g1.png','rb') as f:
+			with open('g2.png','rb') as f2:
+				fs = [discord.File(f,filename='Activity Graph.png'), discord.File(f2,filename='QueueBot Usage Graph.png')]
 
-
-
-		plt.clf()
-		plot = df.plot.bar(y="#Messages")
-		# plot.set(xticks=days)
-		plt.xticks(rotation=90)
-		fig = plot.get_figure()
-		fig.savefig("output.png")
-
-		plt.clf()
-
-		plot = df.plot.bar(y="#Characters")
-		# plot.set(xticks=days)
-		plt.xticks(rotation=90)
-		fig = plot.get_figure()
-		fig.savefig("output2.png")
-		
-
-
-		
-
-		
-
-
-		#print(data)
-
-
+				await ctx.send("User data for " + member.display_name + ":",files=fs)
 
 	async def parse_params(self,ctx,args):
 			n = None
@@ -162,35 +196,37 @@ class analytics(commands.Cog):
 
 			return n,member
 
-# db.system.profile.find({ 
-#   "timestamp" : { 
-#     $lt: new Date(), 
-#     $gte: new Date(new Date().setDate(new Date().getDate()-1))
-#   }   
-# })
+def bar_plot(df,name,palette = None):
+		plt.close("all")
+		plt.clf()
+		if palette != None:
+			sns.set_palette(palette)
+		plot = df.plot.bar(subplots=True)
 
+		# plot.set(xticks=days)
+		plt.xticks(rotation=90)
+		for ax in plot:
+			ax.set_title("")
+		fig = plot[0].get_figure()
+
+
+		fig.savefig(name)
 	
 
-	# @commands.Cog.listener()
-	# async def on_voice_state_update(self,member, before, after):
-	# 	settings = await self.bot.cogs["Settings"].get(member.guild.id,"logs")
-	# 	if not settings['enabled']:
-	# 		return
-	# 	e = member_embed(member)
-	# 	e.title = voice_state_diff(before,after)
-		
-	# 	vc_log_channel = member.guild.get_channel(settings["vc_log_channel"])
-	# 	await vc_log_channel.send(embed=e)
 
 
-# def voice_state_diff(before,after):
-# 	if before.channel != after.channel:
-# 		if before.channel == None or before.afk:
-# 			return f"connected to {after.channel.name}"
-# 		if after.channel == None:
-# 			return f"disconnected from {before.channel}"
-# 		else:
-# 			return f"moved from {before.channel.name} to {after.channel.name}"
+def voice_state_diff(before,after):
+	if before.channel != after.channel:
+		if before.self_mute and not after.self_mute:
+			return "unmute"
+		elif not before.self_mute and after.self_mute:
+			return "mute"
+		elif before.channel == None or before.afk:
+			return f"connected"
+		elif after.channel == None:
+			return f"disconnected"
+		else:
+			return f"moved"
 
 
 def setup(bot):
