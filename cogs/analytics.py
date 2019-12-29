@@ -102,10 +102,54 @@ class analytics(commands.Cog):
 			data["qn"] = True
 		
 		await utils.db.insertOne(f"analytics.text.a{message.guild.id}", data)
-	
 
 	# @commands.command()
-	# async def get_settings(self,ctx,*,cogName=None):
+	# async def t(self,ctx,*args):
+
+	# 	n , member = await self.parse_params(ctx,args)
+	# 	now = datetime.datetime.now()
+	# 	now_naive_utc = make_naive(now)
+
+	# 	days = [now.date()]
+		
+	# 	for i in range(1,n+1):
+	# 		days.append((now - timedelta.Timedelta(days=i)).date())
+
+	# 	days = list(reversed(days))
+	# 	df = pd.DataFrame(index=days)
+	# 	columns=['#Messages','#Characters']
+	# 	for c in columns:
+	# 		df[c] = 0
+
+
+	# 	after = now  - timedelta.Timedelta(days=n)
+	# 	count = 0
+	# 	for channel in ctx.guild.text_channels:
+	# 		try:
+	# 			print(channel.name)
+	# 			async for message in channel.history(after=after,limit=None) :
+	# 				count += 1
+	# 				if message.author.id == member.id:
+	# 					try:
+	# 						day = message.created_at.date()
+	# 						df["#Messages"][day] += 1
+	# 						df["#Characters"][day]  += len(message.content)
+	# 					except:
+	# 						print("caca")
+	# 						return
+
+	# 		except:
+	# 			#print("Error accesing " + channel.name)
+	# 			pass
+
+			
+	# 	print(count)
+	# 	bar_plot(df[["#Characters","#Messages"]],"g1.png",palette="hls")
+
+	# 	with open('g1.png','rb') as f:
+	# 		fi = discord.File(f,filename='Activity Graph.png')
+	# 		await ctx.send("User data for " + member.display_name + ":",file=fi)
+
 	@dev() #temp!
 	@commands.command()
 	async def info(self,ctx,*args):
@@ -227,6 +271,12 @@ def voice_state_diff(before,after):
 			return f"disconnected"
 		else:
 			return f"moved"
+
+def make_naive(dt):
+	c = dt
+	res = c.astimezone()
+	res.replace(tzinfo=None)	
+	return res
 
 
 def setup(bot):

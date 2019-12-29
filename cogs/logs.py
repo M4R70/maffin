@@ -17,10 +17,12 @@ class logs(commands.Cog):
 			"text_chat_log_channel",
 			"mute_log_channel"
 			]
+		self.errorCog = self.bot.cogs["errorHandling"]
 
 
+	async def try_to_send(channel,message,embed,cog):
+		pass
 
-			
 
 	def validate_settings(self,settings,guild):
 		try: 
@@ -41,8 +43,6 @@ class logs(commands.Cog):
 					except KeyError:
 						pass
 					
-
-
 				# vc_log_channel = guild.get_channel(settings["channels"]["vc_log_channel"])
 				# if vc_log_channel == None:
 				# 	return "logs: vc log channel not found"
@@ -87,7 +87,9 @@ class logs(commands.Cog):
 			else:
 				return actual_channel
 
-
+	@commands.command()
+	async def b(self,ctx,):
+		raise KeyError
 
 	@commands.Cog.listener()
 	async def on_message_edit(self,before, after):
@@ -95,12 +97,8 @@ class logs(commands.Cog):
 		if channel == False:
 			return
 
-
-
-
-
 		e = member_embed(after.author,color=discord.Colour.gold(),title="Message Deleted")
-
+		
 		post_separate = False
 		if len(before.content) < 1000 and len(after.content) < 1000:
 			e.add_field(name="Before",value=f"{before.content}",inline=False)
@@ -108,18 +106,23 @@ class logs(commands.Cog):
 		else:
 			e.add_field(name="Messages too long, will be posted below",value="** **",inline =False)
 			post_separate = True
+		
 		e.add_field(name="Jump Link",value=f"[here]({after.jump_url})")
 
 		try:
+
 			await channel.send(embed=e)
-		except:
-			pass #YOLO
-		 
-		if post_separate:
-			await channel.send("Before:")
-			await channel.send(f"```{before.content}```")
-			await channel.send("After:")
-			await channel.send(f"```{after.content}```")
+
+			if post_separate:
+				await channel.send("Before:")
+				await channel.send(f"```{before.content}```")
+				await channel.send("After:")
+				await channel.send(f"```{after.content}```")
+		
+		except discord.Forbidden:
+			await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
+		except discord.errors.HTTPException:
+			pass
 
 	@commands.Cog.listener()
 	async def on_message_delete(self,message):
@@ -137,12 +140,14 @@ class logs(commands.Cog):
 			e.add_field(name="Message",value=f"Message too long, will be posted below this",inline=False)
 			post_separate = True
 
+		try:
 		
-		await channel.send(embed=e)
-		if post_separate:
-			await channel.send(f"```{message.content}```")
+			await channel.send(embed=e)
+			if post_separate:
+				await channel.send(f"```{message.content}```")
 
-
+		except discord.Forbidden:
+			await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
 
 
 
@@ -153,10 +158,8 @@ class logs(commands.Cog):
 		if channel == False:
 			return
 		
-		
 		e = member_embed(after,color=discord.Colour.purple())
 		post= False
-
 
 		if before.display_name != after.display_name:
 			e.title = "Name Change"
@@ -166,7 +169,10 @@ class logs(commands.Cog):
 		elif before.roles != after.roles:
 			pass #TODO roles
 		if post:
-			await channel.send(embed=e)
+			try:
+				await channel.send(embed=e)
+			except discord.Forbidden:
+				await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
 
 	# @commands.Cog.listener()
 	# async def on_user_update(self,before, after):
@@ -195,6 +201,26 @@ class logs(commands.Cog):
 
 
 
+	async def log_server_mute(self,diff,member):
+		channel = await self.get_channel_if_enabled(member.guild,"mute_log_channel")
+		if channel == False:
+			return
+		
+		entry = await search_entry(member.guild,member,discord.AuditLogAction.member_update)
+
+		if diff == "Muted":
+			color = discord.Colour.orange()
+		else:
+			color = discord.Colour.gold()
+
+		e = None 
+
+		e = member_embed(member,title=f"{diff}",color=color,entry=entry)
+		
+		try:
+			await channel.send(embed=e)
+		except discord.Forbidden:
+			await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
 
 	@commands.Cog.listener()
 	async def on_voice_state_update(self,member, before, after):
@@ -209,38 +235,15 @@ class logs(commands.Cog):
 			return
 
 		elif diff == "Muted" or diff == "Unmuted":
-			print("holis")
-			channel = await self.get_channel_if_enabled(member.guild,"mute_log_channel")
-			if channel == False:
-				return
-			
-			entry = await search_entry(member.guild,member,discord.AuditLogAction.member_update)
-
-			if diff == "Muted":
-				color = discord.Colour.orange()
-			else:
-				color = discord.Colour.gold()
-
-			e = None #creo que no hace falta
-			if entry == "fail":
-				e = member_embed(member,title=f"{diff}",color=color)
-				e.add_field(name="Moderator",value="failed to obtain")
-			else:
-				e = member_embed(member,title=f"{diff}",color=color,entry=entry)
-			
-			e.remove_field(3) #rolfmao
-			await channel.send(embed=e)
-			
+			await self.log_server_mute(diff,member)
 			return
-
 		else:
-
 			e = member_embed(member)
-
 			e.title = diff
-			
-			await channel.send(embed=e)
-
+			try:
+				await channel.send(embed=e)
+			except discord.Forbidden:
+				await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
 
 	@commands.Cog.listener()
 	async def on_member_ban(self, guild, user): #esto es ilegible
@@ -249,18 +252,19 @@ class logs(commands.Cog):
 			return
 		
 		entry = await search_entry(guild,user,discord.AuditLogAction.ban)
+		e = member_embed(user,title="BAN",color=discord.Colour.red(),entry=entry)
 		
-		
-		e = None
-		if entry == "fail":
-			e = member_embed(user,title="BAN",color=discord.Colour.red())
-			e.add_field(name="Moderator",value="failed to obtain")
-		else:
-			e = member_embed(user,title="BAN",color=discord.Colour.red(),entry=entry)
-			if entry.reason == None:
-				pass #TODO romperle las bolas al mod para que agregue razon
-		await channel.send(embed=e)
+		try:
+			e.add_field(name="Reason",value=entry.reason)
+		except:
+			e.add_field(name="Reason",value="None (yet)")
+			#todo Pester mode for reason
 
+		
+		try:
+			await channel.send(embed=e)
+		except discord.Forbidden:
+			await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
 
 	@commands.Cog.listener()
 	async def on_member_unban(self,guild, user):
@@ -269,16 +273,12 @@ class logs(commands.Cog):
 			return
 		
 		entry = await search_entry(guild,user,discord.AuditLogAction.unban)
-		
-
-		if entry == "fail":
-			e = member_embed(user,title="UNBAN",color=discord.Colour.green())
-			e.add_field(name="Moderator",value="failed to obtain")
-		else:
-			e = member_embed(user,title="UNBAN",color=discord.Colour.green(),entry=entry,no_reason=True)
-
-		await channel.send(embed=e)
-
+		e = member_embed(user,title="UNBAN",color=discord.Colour.green(),entry=entry)
+		try:
+			await channel.send(embed=e)
+		except discord.Forbidden:
+			await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
+	
 	@commands.Cog.listener()
 	async def on_member_remove(self,member):
 		channel = await self.get_channel_if_enabled(member.guild,"join_log_channel")
@@ -292,8 +292,10 @@ class logs(commands.Cog):
 		e.title = f"{member}"
 		e.set_author(name="Member Left",icon_url=member.avatar_url)	
 		e.add_field(name="ID:",value=member.id)
-
-		await channel.send(embed=e)
+		try:
+			await channel.send(embed=e)
+		except:
+			await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
 
 	@commands.Cog.listener()
 	async def on_member_join(self,member):
@@ -301,7 +303,6 @@ class logs(commands.Cog):
 		if channel == False:
 			return
 
-		
 
 		possible_invites = await self.find_possible_invites(member.guild)
 		nothing = "** **"
@@ -326,8 +327,10 @@ class logs(commands.Cog):
 		else:
 			e.add_field(name="Invite could not be retrieved",value=nothing,inline=False)
 
-		await channel.send(embed=e)
-
+		try:
+			await channel.send(embed=e)
+		except discord.Forbidden:
+			await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
 
 	async def crawl_invites(self):
 		for guild in self.bot.guilds:
@@ -384,7 +387,7 @@ async def search_entry(guild,target_user,action):
 def voice_state_diff(before,after):
 
 	if before.mute and not after.mute:
-		return "Unuted"
+		return "Unmuted"
 	elif not before.mute and after.mute:
 		return "Muted"
 
@@ -402,17 +405,20 @@ def voice_state_diff(before,after):
 
 
 
-def member_embed(member, title="Insert a title you lazy dev!",color = discord.Colour.blue(),entry=None,no_reason=False):
+def member_embed(member, title="Insert a title you lazy dev!",color = discord.Colour.blue(),entry=None):
 	e = discord.Embed()
 	e.colour = color
 	e.title = title
 	e.set_author(name=member.display_name, icon_url=member.avatar_url)
 	e.add_field(name="Account name",value=member.name,inline=True)
 	e.add_field(name="User id",value=member.id,inline=True)
-	if entry != None:
+	try:
 		e.add_field(name="Moderator",value=f"{entry.user}",inline=False)
-		if not no_reason:
-			e.add_field(name="Reason",value=f"{entry.reason}")
+	except:
+		e.add_field(name="Moderator",value="failed to obtain")
+
+
+
 	return e
 
 
