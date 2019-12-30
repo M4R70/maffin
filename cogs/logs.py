@@ -148,6 +148,8 @@ class logs(commands.Cog):
 
 		except discord.Forbidden:
 			await self.errorCog.report( "logs",f"Missing permission to post in {channel.name}")
+		except discord.errors.HTTPException:
+			pass
 
 
 
@@ -386,19 +388,20 @@ async def search_entry(guild,target_user,action):
 
 def voice_state_diff(before,after):
 
-	if before.mute and not after.mute:
-		return "Unmuted"
-	elif not before.mute and after.mute:
-		return "Muted"
-
 
 	if before.channel != after.channel:
-		if before.channel == None or before.afk:
+		if before.channel == None or before.afk and after.channel != None:
 			return f"connected to {after.channel.name}"
-		if after.channel == None:
+		elif after.channel == None and before.channel != None:
 			return f"disconnected from {before.channel}"
-		else:
+		elif before.channel != None and after.channel != None:
 			return f"moved from {before.channel.name} to {after.channel.name}"
+	
+	elif before.mute and not after.mute:
+		return "Unmuted"
+	elif not before.mute and after.mute:
+		return "Muted"	
+	
 	else:
 		return None
 

@@ -15,16 +15,18 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     print(f"ID: {bot.user.id}")
     print(f"invite: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot")
-    try:
-        for cog in os.listdir('cogs/'):
+    
+    for cog in os.listdir('cogs/'):
+        if cog.endswith('.py'):
+            cogname = cog[:-3]
+            try:
+                bot.load_extension("cogs."+cogname)
+            except Exception as e:
+                print(f"Error loading cog {cogname}" )
+                print(e)
+                print("""**Traceback:**\n```{0}```\n""".format(' '.join(traceback.format_exception(None, e, e.__traceback__))))
+    print("All cogs loaded OK")
 
-            if cog.endswith('.py'):
-                bot.load_extension("cogs."+cog[:-3])
-        print("All cogs loaded OK")
-    except Exception as e:
-        print("Error loading cog")
-        print(e)
-        print("""**Traceback:**\n```{0}```\n""".format(' '.join(traceback.format_exception(None, e, e.__traceback__))))
 
 
 bot.run(token)

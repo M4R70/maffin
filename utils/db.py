@@ -8,6 +8,10 @@ async def findOne(collection,query):
 
 def client():
 	return db
+async def clear(collection):
+	if collection != "heartbeat":
+		raise ValueError #No seas gil!
+	await db.drop_collection(collection)
 
 async def find(collection,query):
 	cursor =  db[collection].find(query)

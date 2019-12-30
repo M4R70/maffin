@@ -150,9 +150,20 @@ class analytics(commands.Cog):
 	# 		fi = discord.File(f,filename='Activity Graph.png')
 	# 		await ctx.send("User data for " + member.display_name + ":",file=fi)
 
+
 	@dev() #temp!
 	@commands.command()
 	async def info(self,ctx,*args):
+		n , member = await self.parse_params(ctx,args)
+		now = datetime.datetime.now()
+		
+		
+
+
+
+	@dev() #temp!
+	@commands.command()
+	async def i(self,ctx,*args):
 
 		n , member = await self.parse_params(ctx,args)
 		

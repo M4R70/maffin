@@ -12,6 +12,28 @@ class cogMan(commands.Cog):
 	def validate_settings(self,settings,guild):		
 		return True
 
+	@commands.command()
+	@dev()
+	async def print_cogs(self,ctx):
+		m = ""
+		for cog in self.bot.cogs:
+			m += cog + '\n'
+		await ctx.send(m)
+
+	@commands.command()
+	@dev()
+	async def reload_all(self,ctx):			
+		for cog in os.listdir('cogs/'):
+			cogname = cog[:-3]
+			if cog.endswith('.py'):
+				try:
+					bot.reload_extension("cogs."+cogname)
+				except:
+					try:
+						bot.load_extension("cogs."+cogname)
+					except:
+						print(f"error loading {cogname}")
+
 	@commands.command(aliases=["r"])
 	@dev()
 	async def reload(self,ctx,*,cog=None):
@@ -22,6 +44,8 @@ class cogMan(commands.Cog):
 			cog = 'cogs.'+cog
 		self.last = cog
 		try:
+			if cog == "cogs.heartbeat": #make this an automatic thing (or as automatic as possible)
+				self.bot.cogs["heartbeat"].kill_loop()
 			self.bot.reload_extension(cog)
 			await ctx.send(f'{cog} Reloaded')
 			print(f'-------------{cog} Reloaded--------------')
