@@ -177,8 +177,8 @@ class analytics(commands.Cog):
 
 
 
-	@dev()  # temp!
-	@commands.command()
+	
+	@commands.command(aliases=['g'])
 	async def info(self, ctx, *args):
 
 		n, member = await self.parse_params(ctx, args)
