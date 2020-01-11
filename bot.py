@@ -17,11 +17,13 @@ async def on_ready():
     print(f"ID: {bot.user.id}")
     print(f"invite: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot")
     
+    bot.load_extension("cogs.errorHandling")
     for cog in os.listdir('cogs/'):
         if cog.endswith('.py'):
             cogname = cog[:-3]
             try:
                 bot.load_extension("cogs."+cogname)
+                print(loaded + cogname)
             except Exception as e:
                 print(f"Error loading cog {cogname}" )
                 print(e)
