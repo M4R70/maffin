@@ -1,6 +1,6 @@
 from motor import motor_asyncio as mongod
 client = mongod.AsyncIOMotorClient('localhost', 27017)
-db = client.oompaLoompa
+db = client.maffin
 
 async def findOne(collection,query):
 	found = await db[collection].find_one(query)
