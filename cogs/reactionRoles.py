@@ -30,10 +30,12 @@ class reactionRoles(commands.Cog):
 	# self.updateSettings(ctx.guild.id,message.channel.id,message.id,d)
 	def validate_settings(self,settings,guild):
 		try:
-			e = settings['enabled']
-			return True
-		except KeyError as err:
-			return f"Reaction roles, Missing field {e}"
+			if settings["enabled"]:
+				pass
+		except KeyError as e:
+			return f"analytics, Missing field {e}"
+
+		return True
 
 
 	async def updateRR(self,gid,cid,mid,d):
