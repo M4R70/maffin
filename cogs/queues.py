@@ -21,7 +21,6 @@ def enabled():
 		if s['queues']['enabled']:
 			return True
 		else:
-			await ctx.send("The queues module is not enabled on this guild")
 			return False
 	return commands.check(predicate)
 
