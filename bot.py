@@ -23,7 +23,7 @@ async def on_ready():
             cogname = cog[:-3]
             try:
                 bot.load_extension("cogs."+cogname)
-                print(loaded + cogname)
+                print("loaded" + cogname)
             except Exception as e:
                 print(f"Error loading cog {cogname}" )
                 print(e)
