@@ -3,6 +3,7 @@ from discord.ext import commands
 import json
 import os
 import logging
+import traceback
 with open('creds.json','r') as f:
     creds = json.load(f)
     token = creds["token"]
