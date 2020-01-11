@@ -53,9 +53,9 @@ class queues(commands.Cog):
 		
 		return True
 		
-	
-	@commands.has_permissions(administrator=True)
 	@enabled()
+	@commands.has_permissions(administrator=True)
+	
 	@commands.command()
 	async def qcreate(self,ctx):
 		q = await get_queue(ctx.channel.id)
@@ -65,9 +65,8 @@ class queues(commands.Cog):
 		else:
 			await ctx.send('This channel already has a queue!')
 
-
-	@commands.has_permissions(administrator=True)
 	@enabled()
+	@commands.has_permissions(administrator=True)
 	@commands.command()
 	@queue_exists()
 	async def qdelete(self,ctx):
