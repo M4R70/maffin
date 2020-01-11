@@ -1,0 +1,11 @@
+matplotlib==3.1.2
+seaborn==0.9.0
+timeago==1.0.11
+motor==2.0.0
+pandas==0.25.3
+requests==2.21.0
+numpy==1.18.0
+discord.py==1.2.5
+timedelta==2019.4.13
+discord==1.0.1
+ruamel.base==1.0.0
