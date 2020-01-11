@@ -33,7 +33,7 @@ class reactionRoles(commands.Cog):
 			if settings["enabled"]:
 				pass
 		except KeyError as e:
-			return f"analytics, Missing field {e}"
+			return f"reactionRoles, Missing field {e}"
 
 		return True
 

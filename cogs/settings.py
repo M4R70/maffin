@@ -40,7 +40,6 @@ class Settings(commands.Cog):
 		for cogName in self.bot.cogs:
 			cog = self.bot.cogs[cogName]
 			s = settings.get(cogName, {})
-			print(cogName)
 			validation = cog.validate_settings(s, guild)
 			if validation != True:
 				return validation
