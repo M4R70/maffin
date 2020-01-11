@@ -5,25 +5,30 @@ from collections import defaultdict
 from utils.checks import dev
 from ruamel import yaml
 import ruamel
-
+from collections import defaultdict
 
 class Settings(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 		# self.default_settings = defaultdict(lambda :False) #store this on db, with a better default?
-		self.default_settings = {"staffPing": {"enabled": False}}
+		disabled = defaultdict(lambda: {"enabled":False}  )
+		self.default_settings = defaultdict(lambda : disabled)
 
 	async def get(self, guild_id, cogName=None):
 		d = await utils.db.findOne("settings", {"guild_id": guild_id})
 		if d == None:
 			return self.default_settings
-		if cogName == None:
+		elif cogName == None:
 			return d
-		else:
+		elif cogName in d:
 			return d[cogName]
+		else:
+			return {"enabled":False}
 
 	async def get_yaml(self, guild_id):
 		d = await utils.db.findOne("settings_yaml", {"guild_id": guild_id})
+		if d == None:
+			return "None"
 		return d["settings"]
 
 	async def set(self, guild_id, new_settings):

@@ -24,7 +24,7 @@ class analytics(commands.Cog):
 			if settings["enabled"]:
 				pass
 		except KeyError as e:
-			return f"logs, Missing field {e}"
+			return f"analytics, Missing field {e}"
 
 		return True
 
@@ -32,7 +32,7 @@ class analytics(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
-		settings = await self.bot.cogs["Settings"].get(member.guild.id, "logs")
+		settings = await self.bot.cogs["Settings"].get(member.guild.id, "analytics")
 		if not settings['enabled']:
 			return
 
