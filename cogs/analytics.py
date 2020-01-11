@@ -159,7 +159,7 @@ class analytics(commands.Cog):
 			"text_channel_id": message.channel.id,
 			"guild_id": message.guild.id,
 			"length": len(message.content),
-			"datetime": datetime.datetime.now(),
+			"datetime": message.created_at,
 			"qj": False,
 			"qn": False,
 			"message_id": message.id
