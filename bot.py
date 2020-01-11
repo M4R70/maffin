@@ -28,7 +28,7 @@ async def on_ready():
                 print(f"Error loading cog {cogname}" )
                 print(e)
                 print("""**Traceback:**\n```{0}```\n""".format(' '.join(traceback.format_exception(None, e, e.__traceback__))))
-    print("All cogs loaded OK")
+    print("-----------------All cogs loaded OK---------------")
 
 
 

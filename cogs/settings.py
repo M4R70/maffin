@@ -4,7 +4,6 @@ import utils.db
 from collections import defaultdict
 from utils.checks import dev
 from ruamel import yaml
-import ruamel
 from collections import defaultdict
 
 class Settings(commands.Cog):
@@ -56,7 +55,7 @@ class Settings(commands.Cog):
 	@dev()  # admin
 	async def set_settings(self, ctx, *, new_settings: str):
 		guild_id = ctx.guild.id
-		new_settings_dict = yaml.load(new_settings)
+		new_settings_dict = yaml.safe_load(new_settings)
 		validation = self.validate(new_settings_dict, ctx.guild)
 		if validation == True:
 			await utils.db.updateOne("settings_yaml", {"guild_id": guild_id}, {"$set": {"settings": new_settings}})

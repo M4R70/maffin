@@ -22,7 +22,7 @@ class analytics(commands.Cog):
 	def validate_settings(self, settings, guild):
 		try:
 			if settings["enabled"]:
-				pass
+				return True
 		except KeyError as e:
 			return f"analytics, Missing field {e}"
 

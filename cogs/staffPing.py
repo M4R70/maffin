@@ -9,12 +9,18 @@ class staffPing(commands.Cog):
 
 
 	def validate_settings(self,settings,guild):
-		try:
+		try: 
 			if settings["enabled"]:
-				pass
+				pingRole = [r for r in guild.roles if r.id == settings['role_id']]
+				if len(pingRole) == 0:
+					return "staffPing: role not found"
+				pingChannel = guild.get_channel(settings["channel_id"])
+				if pingChannel == None:
+					return "staffPing: channel not found"
+		
 		except KeyError as e:
 			return f"staffPing, Missing field {e}"
-
+		
 		return True
 		
 
@@ -30,6 +36,7 @@ class staffPing(commands.Cog):
 	@commands.Cog.listener()
 	async def on_message(self,message):
 		settings = await self.bot.cogs["Settings"].get(message.guild.id,"staffPing")
+
 		if settings['enabled']:
 			pingRole = [r for r in message.guild.roles if r.id == settings['role_id']][0]
 			if pingRole in message.role_mentions:
