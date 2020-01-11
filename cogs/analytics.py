@@ -153,7 +153,7 @@ class analytics(commands.Cog):
 		if not settings['enabled']:
 			return
 
-		print("inserting")
+
 		data = {
 			"member_id": message.author.id,
 			"text_channel_id": message.channel.id,
