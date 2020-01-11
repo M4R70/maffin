@@ -10,7 +10,7 @@ from utils.checks import dev
 import seaborn as sns
 from matplotlib import pyplot as plt
 import pandas as pd
-
+import timeago
 
 class analytics(commands.Cog):
 
@@ -23,7 +23,6 @@ class analytics(commands.Cog):
 		try:
 			if settings["enabled"]:
 				pass
-
 		except KeyError as e:
 			return f"logs, Missing field {e}"
 
@@ -74,8 +73,81 @@ class analytics(commands.Cog):
 
 		await utils.db.insertOne(f"analytics.voice.a{member.guild.id}", d)
 
-	@commands.Cog.listener()
-	async def on_message(self, message):
+
+
+
+
+	@dev()  # temp!
+	@commands.command()
+	async def pull_text_data_from_api(self, ctx, n = 5):
+		today = datetime.datetime.now()
+		last_day = today - timedelta.Timedelta(days=n)
+
+		this_marker = {
+			"from":today,
+			"to":last_day,
+			"id":ctx.message.id,
+		}
+
+		query_periods = [this_marker]
+
+
+		query = {
+			"from": {
+				"$gte": last_day
+				}
+		}		
+
+		cache_markers = await utils.db.find(f"analytics.text.a{ctx.guild.id}.cache_markers", query)
+
+
+		for marker in cache_markers:
+			query_periods = insert_marker(marker,query_periods)
+		
+		def to_string(m):
+			now = datetime.datetime.now()
+			return f"From {(now - m['from']).days} days go, To : {(now - m['to']).days} days go"
+
+
+		total_query_days = 0
+		for period in query_periods:
+			total_query_days += (period["from"] - period["to"]).days
+
+		newline = '\n'
+
+		await ctx.send( f"Periods to query:  {newline}{newline.join([to_string(p) for p in query_periods ])}" + '\n' + f"total: {total_query_days} days")
+
+
+		count = 0
+		for period in query_periods:
+			for channel in ctx.guild.text_channels:
+				try:
+					async for message in channel.history(limit=None,after=period["to"],before=period["from"]):
+						await self._log_message(message)
+						count += 1
+				except Exception as e:
+					print(e)
+
+		for marker in cache_markers:
+			await utils.db.deleteOne(f"analytics.text.a{ctx.guild.id}.cache_markers",marker)
+		
+		await utils.db.insertOne(f"analytics.text.a{ctx.guild.id}.cache_markers",this_marker)
+
+		await ctx.send(f"Cached {count} messages :thumbsup:")
+
+
+	@dev()  # temp!
+	@commands.command()
+	async def insert_test_marker(self, ctx, n_from:int, n_to:int):
+		fom = datetime.datetime.now() - timedelta.Timedelta(days= n_from)
+		to = datetime.datetime.now() - timedelta.Timedelta(days= n_to)
+		
+
+		await utils.db.insertOne(f"analytics.text.a{ctx.guild.id}.cache_markers", {"to":to,"from":fom})
+
+
+
+	async def _log_message(self,message):
 
 		settings = await self.bot.cogs["Settings"].get(message.guild.id, "analytics")
 		if not settings['enabled']:
@@ -89,6 +161,7 @@ class analytics(commands.Cog):
 			"datetime": datetime.datetime.now(),
 			"qj": False,
 			"qn": False,
+			"message_id": message.id
 		}
 
 		if message.content == "!qj":
@@ -96,7 +169,13 @@ class analytics(commands.Cog):
 		elif message.content == "!qn":
 			data["qn"] = True
 
-		await utils.db.insertOne(f"analytics.text.a{message.guild.id}", data)
+		await utils.db.updateOne(f"analytics.text.a{message.guild.id}",{"message_id":message.id}, {"$set":data})
+
+	@commands.Cog.listener()
+	async def on_message(self, message):
+		await self._log_message(message)
+
+
 
 	@dev()  # temp!
 	@commands.command()
@@ -183,6 +262,29 @@ class analytics(commands.Cog):
 
 		return n, member
 
+
+def insert_marker(marker,periods):
+
+	def es_antes(d1,d2):
+		return d1 > d2
+
+
+	for i in range(len(periods)):
+		period = periods[i]
+
+		if es_antes(period["from"],marker["from"]) and es_antes(marker["to"],period["to"]):
+				periods.insert(i+1,{"from":marker["to"], "to": period["to"] })
+				periods[i]["to"] = marker["from"]
+				return periods
+
+		elif es_antes(period["from"],marker["from"]) and es_antes(period["to"],marker["to"]):
+			continue
+		
+		
+		else:
+			print("DAFUQ?! analytics.py:insert_marker")
+		
+					
 
 def bar_plot(df, name, palette=None):
 	plt.close("all")
