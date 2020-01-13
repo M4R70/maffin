@@ -61,9 +61,17 @@ class errorHandling(commands.Cog):
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
+    @commands.command()
+    async def m(self, ctx, *, name):
+        await ctx.send(fake_mention(ctx.guild, name))
+
 # @commands.Bot.event()
 # async def on_error(self,event, *args, **kwargs):
 # 	print("error!")
+def fake_mention(guild,name):
+    roles = guild.roles
+    r = list(filter(lambda x: x.name == name,roles))
+    return f"`<@&{r[0].id}>`"
 
 
 def setup(bot):
