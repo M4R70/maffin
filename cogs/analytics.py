@@ -30,6 +30,15 @@ class analytics(commands.Cog):
 
 	# moved, disconnected, connected
 
+	async def on_load(self):
+		print("crawlin")
+		now = datetime.datetime.now()
+		for g in self.bot.guilds:
+			for c in g.voice_channels:
+				for m in c.members:
+					await self.log_connection(m, now)
+
+
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
 		settings = await self.bot.cogs["Settings"].get(member.guild.id, "analytics")

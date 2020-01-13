@@ -30,6 +30,12 @@ async def on_ready():
                 print(f"Error loading cog {cogname}" )
                 print(e)
                 print("""**Traceback:**\n```{0}```\n""".format(' '.join(traceback.format_exception(None, e, e.__traceback__))))
+
+    for cogname in bot.cogs:
+        cog = bot.cogs[cogname]
+        if hasattr(cog,'on_load'):
+            await cog.on_load()
+
     print("-----------------All cogs loaded OK---------------")
 
 
