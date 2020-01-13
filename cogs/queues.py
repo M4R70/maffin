@@ -204,7 +204,7 @@ class queues(commands.Cog):
 	@commands.command()
 	async def qn(self,ctx):
 		queue = await get_queue(ctx.channel.id)
-		if not queue['moderated'] or queue_authorized(ctx):
+		if not queue['moderated'] or host(ctx):
 			q = queue['order']
 			if len(q) > 0:
 				q.remove(q[0])
@@ -283,12 +283,6 @@ async def get_order(channelid):
 async def get_queue(channelid):
 	q = await utils.db.findOne('queues',{'channel_id':channelid})
 	return q
-
-
-
-def queue_authorized(ctx):
-		return ctx.author.permissions_in(ctx.channel).ban_members or ( 'Community Host' in [r.name for r in ctx.author.roles])
-
 
 
 def setup(bot):
