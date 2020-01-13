@@ -287,7 +287,7 @@ async def get_queue(channelid):
 
 
 def queue_authorized(ctx):
-		return ctx.author.permissions_in(ctx.channel).ban_members or ( 'Community Host' in [r.name for r in ctx.author.roles] and ctx.author.display_name.startswith("!!Host"))
+		return ctx.author.permissions_in(ctx.channel).ban_members or ( 'Community Host' in [r.name for r in ctx.author.roles])
 
 
 
