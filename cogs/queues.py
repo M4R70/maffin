@@ -233,8 +233,7 @@ class queues(commands.Cog):
 					await ctx.send(f"It is now {now.mention}'s turn!")
 			else:
 				await ctx.send("The queue is empty :(")
-		else:
-			await ctx.send("You are not allowed to do this!")
+
 
 	@enabled()
 	@queue_exists()
