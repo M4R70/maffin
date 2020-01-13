@@ -244,8 +244,12 @@ class reactionRoles(commands.Cog):
 	def make_rr_message(self, guild, d):
 		categoryRoles = get_category_roles(guild, d['category'])
 		emojis = self.get_emojis(d['emojis'])
-		if len(categoryRoles) > len(emojis):
-			raise generic(message="Not enough emojis :x:")  # test this shit
+		try:
+			if len(categoryRoles) > len(emojis):
+				raise generic(message="Not enough emojis :x:")  # test this shit
+		except TypeError:
+			emojis = self.default_emojis
+
 
 		i = 0
 		msg = d['readable_name'] + ': \n \n'
