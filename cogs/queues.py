@@ -233,6 +233,8 @@ class queues(commands.Cog):
 					await ctx.send(f"It is now {now.mention}'s turn!")
 			else:
 				await ctx.send("The queue is empty :(")
+		else:
+			await ctx.send('You are not authorized to do this')
 
 
 	@enabled()
@@ -293,7 +295,6 @@ async def is_host(ctx):
 	if not set(hostRoles).isdisjoint(ctx.author.roles):
 		return True
 	else:
-		await ctx.send('You are not authorized to do this')
 		return False
 
 
