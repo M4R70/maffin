@@ -262,9 +262,9 @@ class logs(commands.Cog):
 		mod = entry.user
 		if mod is not None:
 			await mod.send(
-				f"Hey, you banned {str(user)} but you added no reason. \n To add one, "
-				f"send me the command `!add_reason {message.id} <reason> ` "
-				f"Note that you must send this command in the guild, and not here in DMs")
+				f"Hey, you banned {str(user)} but you added no reason. \n\nTo add one,"
+				f" send me the command `!add_reason {message.id} <reason> ` "
+				f"\n\nNote that you must send this command in the guild, and not here in DMs")
 
 	@commands.guild_only()
 	@commands.command()
