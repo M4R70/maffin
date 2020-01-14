@@ -14,7 +14,7 @@ def find_full_cog_name(cog):
 	elif cog + '.py' in os.listdir('cogs/feature'):
 		cog = 'cogs.feature.' + cog
 	elif cog + '.py' in os.listdir('cogs/meta'):
-		cog = 'cogs.meta..' + cog
+		cog = 'cogs.meta.' + cog
 	else:
 		cog = 'cogs.' + cog
 	return cog
@@ -66,7 +66,7 @@ class cogMan(commands.Cog):
 		self.last = cogname
 
 		try:
-			if cog == "cogs.mata.heartbeat":  # make this an automatic thing (or as automatic as possible)
+			if cog == "cogs.meta.heartbeat":  # make this an automatic thing (or as automatic as possible)
 				self.bot.cogs["heartbeat"].kill_loop()
 			self.bot.reload_extension(cog)
 			if hasattr(self.bot.cogs[cogname],'on_reload'):
