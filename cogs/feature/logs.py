@@ -130,9 +130,7 @@ class logs(commands.Cog):
 			return
 
 		entry = await search_entry(message.guild, message.author, discord.AuditLogAction.message_delete)
-		e = member_embed(message.author, color=discord.Colour.dark_orange(), title="Message Deleted",entry=entry)
-
-
+		e = member_embed(message.author, color=discord.Colour.dark_orange(), title="Message Deleted", entry=entry)
 
 		post_separate = False
 		if len(message.content) < 1000:
@@ -240,24 +238,45 @@ class logs(commands.Cog):
 				await self.errorCog.report("logs", f"Missing permission to post in {channel.name}")
 
 	@commands.Cog.listener()
-	async def on_member_ban(self, guild, user):  # esto es ilegible
+	async def on_member_ban(self, guild, user):
 		channel = await self.get_channel_if_enabled(guild, "ban_log_channel")
 		if channel == False:
 			return
 
 		entry = await search_entry(guild, user, discord.AuditLogAction.ban)
 		e = member_embed(user, title="BAN", color=discord.Colour.red(), entry=entry)
+		ask_for_reason = False
+
+		e.add_field(name="Reason", value=entry.reason)
 
 		try:
-			e.add_field(name="Reason", value=entry.reason)
-		except:
-			e.add_field(name="Reason", value="None (yet)")
-		# todo Pester mode for reason
-
-		try:
-			await channel.send(embed=e)
+			message = await channel.send(embed=e)
+			if entry.reason is None:
+				await self.do_ask_for_reason(entry, message, user)
+			else:
+				print(entry.reason)
 		except discord.Forbidden:
 			await self.errorCog.report("logs", f"Missing permission to post in {channel.name}")
+
+	async def do_ask_for_reason(self, entry, message, user):
+		mod = entry.user
+		if mod is not None:
+			await mod.send(
+				f"Hey, you banned {str(user)} but you added no reason. \n To add one, "
+				f"send me the command `!add_reason {message.id} <reason> ` "
+				f"Note that you must send this command in the guild, and not here in DMs")
+
+	@commands.guild_only()
+	@commands.command()
+	async def add_reason(self, ctx, message_id: int, *, reason: str):
+		channel = await self.get_channel_if_enabled(ctx.guild, "ban_log_channel")
+		if not channel:
+			return
+		message = await channel.fetch_message(message_id)
+		e = message.embeds[0]
+		e.set_field_at(-1,name="Reason",value=reason,inline=False)
+		await message.edit(embed=e)
+		await ctx.send("Reason updated!")
 
 	@commands.Cog.listener()
 	async def on_member_unban(self, guild, user):
