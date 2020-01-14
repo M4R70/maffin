@@ -7,6 +7,7 @@ import os
 
 
 def find_full_cog_name(cog):
+
 	if cog + '.py' in os.listdir('cogs'):
 		cog = 'cogs.' + cog
 	elif cog + '.py' in os.listdir('cogs/dev'):
@@ -54,7 +55,7 @@ class cogMan(commands.Cog):
 	@commands.command(aliases=["r"])
 	@dev()
 	async def reload(self, ctx, *, cog=None):
-
+		print(self.bot.cogs.keys())
 		cogname = cog
 
 		if cog == None:

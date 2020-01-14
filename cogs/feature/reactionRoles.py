@@ -58,7 +58,7 @@ class reactionRoles(commands.Cog):
 	@commands.command()
 	@enabled()
 	# check that the bot can add roles to people!
-	async def postRRMessage(self, ctx, category: str, exclusive: bool = False, *emojis):
+	async def post_rr_messgae(self, ctx, category: str, exclusive: bool = False, *emojis):
 
 		d = {}
 		d['emojis'] = emojis

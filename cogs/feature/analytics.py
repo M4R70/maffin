@@ -93,7 +93,7 @@ class analytics(commands.Cog):
 
 
 
-	@dev()  # temp!
+	@dev()
 	@commands.command()
 	async def pull_text_data_from_api(self, ctx, n = 5):
 		today = datetime.datetime.now()
@@ -280,27 +280,27 @@ class analytics(commands.Cog):
 		return n, member
 
 
-def insert_marker(marker,periods):
-
-	def es_antes(d1,d2):
-		return d1 > d2
-
-
-	for i in range(len(periods)):
-		period = periods[i]
-
-		if es_antes(period["from"],marker["from"]) and es_antes(marker["to"],period["to"]):
-				periods.insert(i+1,{"from":marker["to"], "to": period["to"] })
-				periods[i]["to"] = marker["from"]
-				return periods
-
-		elif es_antes(period["from"],marker["from"]) and es_antes(period["to"],marker["to"]):
-			continue
-		
-		
-		else:
-			print("DAFUQ?! analytics.py:insert_marker")
-		
+# def insert_marker(marker,periods):
+#
+# 	def es_antes(d1,d2):
+# 		return d1 > d2
+#
+#
+# 	for i in range(len(periods)):
+# 		period = periods[i]
+#
+# 		if es_antes(period["from"],marker["from"]) and es_antes(marker["to"],period["to"]):
+# 				periods.insert(i+1,{"from":marker["to"], "to": period["to"] })
+# 				periods[i]["to"] = marker["from"]
+# 				return periods
+#
+# 		elif es_antes(period["from"],marker["from"]) and es_antes(period["to"],marker["to"]):
+# 			continue
+#
+#
+# 		else:
+# 			print("DAFUQ?! analytics.py:insert_marker")
+#
 					
 
 def bar_plot(df, name, palette=None):

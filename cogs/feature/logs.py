@@ -86,9 +86,6 @@ class logs(commands.Cog):
 			else:
 				return actual_channel
 
-	@commands.command()
-	async def b(self, ctx, ):
-		raise KeyError
 
 	@commands.Cog.listener()
 	async def on_message_edit(self, before, after):
@@ -262,10 +259,11 @@ class logs(commands.Cog):
 		mod = entry.user
 		if mod is not None:
 			await mod.send(
-				f"Hey, you banned {str(user)} but you added no reason. \n\nTo add one,"
+				f"Hey, you banned {str(user)} from {str(message.guild)} but you specified no reason. \n\nTo add one,"
 				f" send me the command `!add_reason {message.id} <reason> ` "
 				f"\n\nNote that you must send this command in the guild, and not here in DMs")
 
+	@commands.has_permissions(ban_members=True)
 	@commands.guild_only()
 	@commands.command()
 	async def add_reason(self, ctx, message_id: int, *, reason: str):
