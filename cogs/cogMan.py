@@ -3,12 +3,27 @@ from utils.checks import dev
 import traceback
 import importlib
 import cogs
+import os
+
+
+def find_full_cog_name(cog):
+	if cog + '.py' in os.listdir('cogs'):
+		cog = 'cogs.' + cog
+	elif cog + '.py' in os.listdir('cogs/dev'):
+		cog = 'cogs.dev.' + cog
+	elif cog + '.py' in os.listdir('cogs/feature'):
+		cog = 'cogs.feature.' + cog
+	elif cog + '.py' in os.listdir('cogs/meta'):
+		cog = 'cogs.meta..' + cog
+	else:
+		cog = 'cogs.' + cog
+	return cog
 
 
 class cogMan(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.last = "cogs.cogManager"
+		self.last = "cogs.cogMan"
 
 	def validate_settings(self, settings, guild):
 		return True
@@ -29,7 +44,6 @@ class cogMan(commands.Cog):
 			if cog.endswith('.py'):
 				try:
 					bot.reload_extension("cogs." + cogname)
-					await self.do_on_load(cogname)
 				except:
 					try:
 						bot.load_extension("cogs." + cogname)
@@ -41,16 +55,22 @@ class cogMan(commands.Cog):
 	@dev()
 	async def reload(self, ctx, *, cog=None):
 
+		cogname = cog
+
 		if cog == None:
 			cog = self.last
-		else:
-			cog = 'cogs.' + cog
-		self.last = cog
+			cogname = cog.split('.')[-1]
+
+		cog = find_full_cog_name(cog)
+
+		self.last = cogname
+
 		try:
-			if cog == "cogs.heartbeat":  # make this an automatic thing (or as automatic as possible)
+			if cog == "cogs.mata.heartbeat":  # make this an automatic thing (or as automatic as possible)
 				self.bot.cogs["heartbeat"].kill_loop()
 			self.bot.reload_extension(cog)
-			await  self.do_on_load(cog[5:])
+			if hasattr(self.bot.cogs[cogname],'on_reload'):
+				await self.bot.cogs[cogname].on_reload()
 			await ctx.send(f'{cog} Reloaded')
 			print(f'-------------{cog} Reloaded--------------')
 		except Exception as e:
@@ -62,7 +82,7 @@ class cogMan(commands.Cog):
 	async def unload(self, ctx, *, cog: str):
 		self.last = cog
 		try:
-			cog = 'cogs.' + cog
+			cog = find_full_cog_name(cog)
 			self.bot.unload_extension(cog)
 			await ctx.send(f'{cog} Unloaded')
 			print(f'-------------{cog} Unloaded--------------')
@@ -73,27 +93,26 @@ class cogMan(commands.Cog):
 	@commands.command(aliases=["l"])
 	@dev()
 	async def load(self, ctx, *, cog=None):
-
-		if cog == None:
-			cog = self.last
-		else:
-			cog = 'cogs.' + cog
-		self.last = cog
-
 		try:
-			importlib.reload(cogs)
-			self.bot.load_extension(cog)
-			await  self.do_on_load(cog[5:])
+			self._load_cog(cog)
 			await ctx.send(f'{cog} Loaded')
-			print(f'-------------{cog} Loaded--------------')
 		except Exception as e:
 			await ctx.send("""**Traceback:**\n```{0}```\n""".format(
 				' '.join(traceback.format_exception(None, e, e.__traceback__))))
 
-	async def do_on_load(self, cogName):
-		cog = self.bot.cogs[cogName]
-		if hasattr(cog, 'on_load'):
-			await cog.on_load()
+	def _load_cog(self, cog):
+
+		if cog == None:
+			cog = self.last
+		elif cog.endswith('.py'):
+			cog = cog[:-3]
+
+		cog = find_full_cog_name(cog)
+		self.last = cog
+		importlib.reload(cogs)
+		self.bot.load_extension(cog)
+
+		print(f'-------------{cog} Loaded--------------')
 
 
 def setup(bot):
