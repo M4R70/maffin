@@ -104,7 +104,7 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def qcopy(self, ctx,*,source_channel:discord.TextChannel):
-		passes_checks, msg = await check(ctx, ["enabled","exists"])
+		passes_checks, msg = await check(ctx, ["enabled","exists","host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
