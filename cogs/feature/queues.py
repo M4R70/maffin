@@ -102,6 +102,21 @@ class queues(commands.Cog):
 
 		return True
 
+	@commands.command()
+	async def qcopy(self, ctx,*,source_channel:discord.TextChannel):
+		passes_checks, msg = await check(ctx, ["enabled","exists"])
+		if not passes_checks:
+			if msg is not None:
+				await ctx.send(msg)
+			return
+
+		source_queue = await get_queue(source_channel.id)
+		del source_queue['_id']
+		source_queue['channel_id'] = ctx.channel.id
+		await utils.db.updateOne('queues', {'guild_id': ctx.guild.id, 'channel_id': ctx.channel.id},
+								 {'$set': source_queue})
+		await ctx.send(f"Copied queue from {source_channel} to {ctx.channel}")
+
 	@commands.has_permissions(administrator=True)
 	@commands.command()
 	async def qcreate(self, ctx):
