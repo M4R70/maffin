@@ -21,13 +21,40 @@ async def enabled(ctx):
 
 
 async def host(ctx):
-	s = await utils.db.findOne("settings", {'guild_id': ctx.guild.id})
+	guild = ctx.guild
+	member = ctx.author
+
+	return await h(guild, member)
+
+
+async def h(guild, member):
+	s = await utils.db.findOne("settings", {'guild_id': guild.id})
 	role_ids = s['queues']['host_role_ids']
-	hostRoles = [r for r in ctx.guild.roles if r.id in role_ids]
-	if not set(hostRoles).isdisjoint(ctx.author.roles):
+	hostRoles = [r for r in guild.roles if r.id in role_ids]
+	if not set(hostRoles).isdisjoint(member.roles):
 		return True
 	else:
 		return False
+
+
+async def get_linked_vc(channel):
+	link = await utils.db.findOne('qlinks', {'guild_id': channel.guild.id, 'text_channel_id': channel.id})
+	if link is None:
+		return None
+	vc_id = link['voice_channel_id']
+	vc = channel.guild.get_channel(vc_id)
+	return vc
+
+
+async def is_host_in_linked_vc(channel):
+	vc = await get_linked_vc(channel)
+	if vc is None:
+		return True
+	for m in vc.members:
+		is_host = await h(channel.guild, m)
+		if is_host:
+			return True
+	return False
 
 
 class queues(commands.Cog):
@@ -50,7 +77,7 @@ class queues(commands.Cog):
 	@commands.command()
 	async def qcreate(self, ctx):
 
-		passes_checks, msg = await check(ctx,["enabled"])
+		passes_checks, msg = await check(ctx, ["enabled"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -69,7 +96,7 @@ class queues(commands.Cog):
 	@commands.command()
 	async def qdelete(self, ctx):
 
-		passes_checks, msg = await check(ctx,["enabled","exists"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -77,11 +104,10 @@ class queues(commands.Cog):
 		await utils.db.deleteOne('queues', {'guild_id': ctx.guild.id, 'channel_id': ctx.channel.id})
 		await ctx.send("Queue deleted :thumbsup:")
 
-
 	@commands.command()
 	async def shuffle(self, ctx):
 
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -95,7 +121,7 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def qreset(self, ctx):
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -107,19 +133,22 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def qunlock(self, ctx):
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
 			return
 
+		await self._unlock(ctx)
+
+	async def _unlock(self, ctx):
 		await utils.db.updateOne('queues', {'guild_id': ctx.guild.id, 'channel_id': ctx.channel.id},
 								 {'$set': {"moderated": False}})
 		await ctx.send("This queue is now unlocked :thumbsup:")
 
 	@commands.command()
 	async def qlock(self, ctx):
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -131,7 +160,7 @@ class queues(commands.Cog):
 
 	@commands.command(aliases=['qj'])
 	async def qjoin(self, ctx):
-		passes_checks, msg = await check(ctx,["enabled", "exists"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -151,7 +180,7 @@ class queues(commands.Cog):
 
 	@commands.command(aliases=['ql'])
 	async def qleave(self, ctx):
-		passes_checks, msg = await check(ctx,["enabled","exists"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -168,7 +197,7 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def shoo(self, ctx, *, guy: discord.Member):
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -184,7 +213,7 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def drag(self, ctx, *, guy: discord.Member):
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -200,7 +229,7 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def swap(self, ctx, guy1: discord.Member, *, guy2: discord.Member):
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -218,7 +247,7 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def put(self, ctx, guy1: discord.Member, *, position: int):
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -237,14 +266,18 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def qn(self, ctx):
-		passes_checks, msg = await check(ctx,["enabled","exists"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
 			return
 		is_host = await host(ctx)
-		queue = await get_queue(ctx.channel.id)
 
+		host_in_vc = await is_host_in_linked_vc(ctx.channel)
+		if not host_in_vc:
+			await ctx.send("There is no host in vc, auto unlocking queue ...")
+			await self._unlock(ctx)
+		queue = await get_queue(ctx.channel.id)
 		if not queue['moderated'] or is_host:
 			q = queue['order']
 			if len(q) > 1:
@@ -257,6 +290,8 @@ class queues(commands.Cog):
 
 				await utils.db.updateOne('queues', {'guild_id': ctx.guild.id, 'channel_id': ctx.channel.id},
 										 {'$set': {'order': q}})
+
+				linked_vc = await get_linked_vc(ctx.channel)
 				try:
 					if now.voice.mute:
 						await now.edit(mute=False)
@@ -273,6 +308,11 @@ class queues(commands.Cog):
 							f"It is now {now.mention}'s turn! {after.mention} please be ready, your turn comes afterwards!")
 				else:
 					await ctx.send(f"It is now {now.mention}'s turn!")
+
+				if linked_vc is not None and not now in linked_vc.members:
+					await  ctx.send(f"\nNote: {now} is not on the voice channel")
+
+
 			else:
 				if len(q) == 1:
 					q.remove(q[0])
@@ -284,7 +324,7 @@ class queues(commands.Cog):
 
 	@commands.command()
 	async def qclose(self, ctx):
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -294,11 +334,10 @@ class queues(commands.Cog):
 								 {'$set': {'open': False}})
 		await ctx.send("Queue is now closed")
 
-
 	@commands.command()
 	async def qopen(self, ctx):
 
-		passes_checks, msg = await check(ctx,["enabled","exists","host"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists", "host"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
@@ -309,19 +348,32 @@ class queues(commands.Cog):
 
 	@commands.command(aliases=['q'])
 	async def qprint(self, ctx):
-		passes_checks, msg = await check(ctx,["enabled","exists"])
+		passes_checks, msg = await check(ctx, ["enabled", "exists"])
 		if not passes_checks:
 			if msg is not None:
 				await ctx.send(msg)
 			return
-		queue_does_exist = await queue_exists(ctx)
-		if not queue_does_exist:
-			return
 		await _qprint(ctx)
+
+	@commands.command()
+	async def qlink(self, ctx):
+		passes_checks, msg = await check(ctx, ["enabled", "exists"])
+		if not passes_checks:
+			if msg is not None:
+				await ctx.send(msg)
+			return
+
+		vc = ctx.author.voice.channel
+		if vc is None:
+			await ctx.send("You are not in a voice channel")
+		tc = ctx.channel
+
+		await utils.db.updateOne('qlinks', {'guild_id': ctx.guild.id, 'text_channel_id': tc.id},
+								 {'$set': {'voice_channel_id': vc.id}})
+		await ctx.send(f"Linked {tc} to {vc} :thumbsup:")
 
 
 async def check(ctx, l):
-
 	if "enabled" in l:
 		is_enabled = await enabled(ctx)
 		if not is_enabled:
@@ -338,7 +390,6 @@ async def check(ctx, l):
 			return False, "You are not authorized to do this"
 
 	return True, "All Passed :thumbsup:"
-
 
 
 async def _qprint(ctx):
