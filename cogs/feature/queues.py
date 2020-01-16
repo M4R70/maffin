@@ -355,6 +355,7 @@ class queues(commands.Cog):
 			return
 		await _qprint(ctx)
 
+	@commands.has_permissions(administrator=True)
 	@commands.command()
 	async def qlink(self, ctx):
 		passes_checks, msg = await check(ctx, ["enabled", "exists"])
