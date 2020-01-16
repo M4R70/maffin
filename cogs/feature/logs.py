@@ -19,6 +19,8 @@ class logs(commands.Cog):
 			"mute_log_channel"
 		]
 		self.errorCog = self.bot.cogs["errorHandling"]
+		self.las_crawl = None
+		self.crawlin = False
 
 	async def try_to_send(channel, message, embed, cog):
 		pass
@@ -342,17 +344,25 @@ class logs(commands.Cog):
 			await self.errorCog.report("logs", f"Missing permission to post in {channel.name}")
 
 	async def crawl_invites(self):
+		if self.crawlin:
+			return
+		else:
+			self.crawlin = True
 		await self.bot.wait_until_ready()
 		while True:
-			for guild in self.bot.guilds:
-				try:
-					guild_invites = {}
-					invites = await guild.invites()
-					for invite in invites:
-						guild_invites[invite.code] = invite
-					self.invites[guild] = guild_invites
-				except discord.errors.Forbidden:
-					pass
+			now = datetime.datetime.now()
+			if self.las_crawl is None or ( (now - self.las_crawl).total_seconds() > 60 * 9.8 ):
+				for guild in self.bot.guilds:
+					try:
+						guild_invites = {}
+						invites = await guild.invites()
+						for invite in invites:
+							guild_invites[invite.code] = invite
+						self.invites[guild] = guild_invites
+					except discord.errors.Forbidden:
+						pass
+				self.las_crawl = datetime.datetime.now()
+				print("crawled " + str(now))
 			await asyncio.sleep(60 * 10)
 
 	async def find_possible_invites(self, guild):

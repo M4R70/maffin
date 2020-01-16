@@ -247,7 +247,7 @@ class queues(commands.Cog):
 
 		if not queue['moderated'] or is_host:
 			q = queue['order']
-			if len(q) > 0:
+			if len(q) > 1:
 				q.remove(q[0])
 				now = None
 				while now == None:
@@ -274,6 +274,10 @@ class queues(commands.Cog):
 				else:
 					await ctx.send(f"It is now {now.mention}'s turn!")
 			else:
+				if len(q) == 1:
+					q.remove(q[0])
+					await utils.db.updateOne('queues', {'guild_id': ctx.guild.id, 'channel_id': ctx.channel.id},
+											 {'$set': {'order': q}})
 				await ctx.send("The queue is empty :(")
 		else:
 			await ctx.send('You are not authorized to do this')
@@ -305,7 +309,11 @@ class queues(commands.Cog):
 
 	@commands.command(aliases=['q'])
 	async def qprint(self, ctx):
-
+		passes_checks, msg = await check(ctx,["enabled","exists"])
+		if not passes_checks:
+			if msg is not None:
+				await ctx.send(msg)
+			return
 		queue_does_exist = await queue_exists(ctx)
 		if not queue_does_exist:
 			return
