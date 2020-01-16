@@ -30,13 +30,13 @@ class analytics(commands.Cog):
 		return True
 
 	# moved, disconnected, connected
-	@commands.Cog.listener()
-	async def on_ready(self):
-		await self.crawl()
+	# @commands.Cog.listener()
+	# async def on_ready(self):
+	# 	await self.crawl()
 
 
-	async def on_reload(self):
-		await self.crawl()
+	# async def on_reload(self):
+	# 	await self.crawl()
 
 	async def crawl(self):
 		print("crawlin")
