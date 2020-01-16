@@ -5,7 +5,12 @@ import random
 
 
 async def queue_exists(ctx):
-	q = await utils.db.findOne('queues', {'channel_id': ctx.channel.id, 'guild_id': ctx.guild.id})
+	channel = ctx.channel
+	return await _queue_exists(channel)
+
+
+async def _queue_exists(channel):
+	q = await utils.db.findOne('queues', {'channel_id': channel.id, 'guild_id': channel.guild.id})
 	if q == None:
 		return False
 	else:
@@ -46,6 +51,15 @@ async def get_linked_vc(channel):
 	return vc
 
 
+async def get_linked_tc(channel):
+	link = await utils.db.findOne('qlinks', {'guild_id': channel.guild.id, 'voice_channel_id': channel.id})
+	if link is None:
+		return None
+	tc_id = link['text_channel_id']
+	tc = channel.guild.get_channel(tc_id)
+	return tc
+
+
 async def is_host_in_linked_vc(channel):
 	vc = await get_linked_vc(channel)
 	if vc is None:
@@ -60,6 +74,21 @@ async def is_host_in_linked_vc(channel):
 class queues(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
+
+	@commands.Cog.listener()
+	async def on_voice_state_update(self, member, before, after):
+		if before.channel != after.channel:
+			if after.channel is None and before.channel is not None:
+				if len(before.channel.members) == 0:
+					text_channel = await get_linked_tc(before.channel)
+					if text_channel is not None:
+						q_exists = await _queue_exists(text_channel)
+						if q_exists:
+							queue = await get_queue(text_channel.id)
+							queue = queue['order']
+							if len(queue) > 0:
+								await utils.db.updateOne('queues', {'guild_id': before.channel.guild.id, 'channel_id': text_channel.id},{'$set': {"order": [], "open": True}})
+								await text_channel.send("Voice channel is empty, resetting queue...")
 
 	def validate_settings(self, settings, guild):
 		try:
