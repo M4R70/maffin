@@ -316,9 +316,9 @@ class queues(commands.Cog):
 				await ctx.send(msg)
 			return
 		is_host = await host(ctx)
-
+		queue = await get_queue(ctx.channel.id)
 		host_in_vc = await is_host_in_linked_vc(ctx.channel)
-		if not host_in_vc:
+		if not host_in_vc and queue['moderated']:
 			await ctx.send("There is no host in vc, auto unlocking queue ...")
 			await self._unlock(ctx)
 		queue = await get_queue(ctx.channel.id)
