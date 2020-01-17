@@ -16,10 +16,8 @@ class moderation(commands.Cog):
         try:
             if settings["enabled"]:
                 return True
-
         except KeyError as e:
             return f"logs: Missing field: enabled"
-
         return True
 
     @commands.Cog.listener()

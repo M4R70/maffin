@@ -3,6 +3,9 @@ import json
 import os
 import logging
 import traceback
+import utils.db
+
+default_prefix = '!'
 
 with open('creds.json', 'r') as f:
 	creds = json.load(f)
@@ -37,10 +40,21 @@ def load_all_cogs():
 	print("Done loading cogs \n \n")
 
 
-bot = commands.AutoShardedBot(command_prefix='!', formatter=None, description=None, pm_help=False, max_messages=50000)
+async def get_pre(bot, message):
+
+	db_info = await utils.db.findOne('prefixes', {'guild_id': message.guild.id})
+	if db_info is None:
+		return default_prefix
+	else:
+		return db_info['prefix']
+
+
+bot = commands.AutoShardedBot(command_prefix=get_pre, formatter=None, description=None, pm_help=False,
+							  max_messages=50000)
 logging.basicConfig(level=logging.INFO)
 
 load_all_cogs()
+
 
 @bot.event
 async def on_ready():
@@ -49,7 +63,5 @@ async def on_ready():
 	print(f"invite: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot")
 	print("----------READY!---------- \n \n")
 
+
 bot.run(token)
-
-
-
