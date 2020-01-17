@@ -42,7 +42,8 @@ class moderation(commands.Cog):
     # @commands.has_permissions(mute_members=True)
     @commands.command()
     async def mute(self, ctx, member: discord.Member):
-        if member.guild_permissions.mute_members == False:
+        vc = ctx.guild.voice_channels[0]
+        if not vc.permissions_for(ctx.author).mute_members:
             return
         try:
             await member.edit(mute=True)
@@ -55,7 +56,8 @@ class moderation(commands.Cog):
     # @commands.has_permissions(mute_members=True)
     @commands.command()
     async def unmute(self, ctx, member: discord.Member):
-        if member.guild_permissions.mute_members == False:
+        vc = ctx.guild.voice_channels[0]
+        if not vc.permissions_for(ctx.author).mute_members:
             return
         try:
             await member.edit(mute=False)
