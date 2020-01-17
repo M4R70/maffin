@@ -19,6 +19,7 @@ class prefix(commands.Cog):
 
     @commands.command()
     async def get_prefix(self, ctx):
+        message = ctx.message
         db_info = await utils.db.findOne('prefixes', {'guild_id': message.guild.id})
         res = ''
         if db_info is None:

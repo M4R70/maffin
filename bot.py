@@ -41,12 +41,14 @@ def load_all_cogs():
 
 
 async def get_pre(bot, message):
-
+	res = [f"<@!{bot.user.id}> "]
 	db_info = await utils.db.findOne('prefixes', {'guild_id': message.guild.id})
 	if db_info is None:
-		return default_prefix
+		res.append(default_prefix)
 	else:
-		return db_info['prefix']
+		res.append(db_info['prefix'])
+
+	return res
 
 
 bot = commands.AutoShardedBot(command_prefix=get_pre, formatter=None, description=None, pm_help=False,
