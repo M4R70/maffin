@@ -9,6 +9,7 @@ class prefix(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.default_prefix = '!'
 
 
     @commands.has_permissions(administrator=True)
@@ -23,7 +24,7 @@ class prefix(commands.Cog):
         db_info = await utils.db.findOne('prefixes', {'guild_id': message.guild.id})
         res = ''
         if db_info is None:
-           res = default_prefix
+           res = self.default_prefix
         else:
             res = db_info['prefix']
 
