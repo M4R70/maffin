@@ -1,4 +1,4 @@
-from discord.ext import commands
+from discord.ext import commands, tasks
 import discord
 import asyncio
 import timeago
@@ -9,7 +9,7 @@ class logs(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 		self.invites = {}
-		self.crawler = self.bot.loop.create_task(self.crawl_invites())
+		# self.crawler = self.bot.loop.create_task(self.crawl_invites())
 		self.valid_channels = [
 			"vc_log_channel",
 			"ban_log_channel",
@@ -21,6 +21,7 @@ class logs(commands.Cog):
 		self.errorCog = self.bot.cogs["errorHandling"]
 		self.las_crawl = None
 		self.crawlin = False
+		self.crawl_invites.start()
 
 	async def try_to_send(channel, message, embed, cog):
 		pass
@@ -87,7 +88,6 @@ class logs(commands.Cog):
 				return False
 			else:
 				return actual_channel
-
 
 	@commands.Cog.listener()
 	async def on_message_edit(self, before, after):
@@ -274,7 +274,7 @@ class logs(commands.Cog):
 			return
 		message = await channel.fetch_message(message_id)
 		e = message.embeds[0]
-		e.set_field_at(-1,name="Reason",value=reason,inline=False)
+		e.set_field_at(-1, name="Reason", value=reason, inline=False)
 		await message.edit(embed=e)
 		await ctx.send("Reason updated!")
 
@@ -343,27 +343,24 @@ class logs(commands.Cog):
 		except discord.Forbidden:
 			await self.errorCog.report("logs", f"Missing permission to post in {channel.name}")
 
+	@tasks.loop(minutes=10)
 	async def crawl_invites(self):
-		if self.crawlin:
-			return
-		else:
-			self.crawlin = True
 		await self.bot.wait_until_ready()
-		while True:
-			now = datetime.datetime.now()
-			if self.las_crawl is None or ( (now - self.las_crawl).total_seconds() > 60 * 9.8 ):
-				for guild in self.bot.guilds:
-					try:
-						guild_invites = {}
-						invites = await guild.invites()
-						for invite in invites:
-							guild_invites[invite.code] = invite
-						self.invites[guild] = guild_invites
-					except discord.errors.Forbidden:
-						pass
-				self.las_crawl = datetime.datetime.now()
-				print("crawled " + str(now))
-			await asyncio.sleep(60 * 10)
+		now = datetime.datetime.now()
+		if self.las_crawl is None or ((now - self.las_crawl).total_seconds() > 60 * 9.8):
+			for g in self.bot.guilds:
+				try:
+					guild = self.bot.get_guild(g.id)
+					guild_invites = {}
+					invites = await guild.invites()
+					for invite in invites:
+						guild_invites[invite.code] = invite
+					self.invites[guild] = guild_invites
+				except discord.errors.Forbidden:
+					pass
+			print("invites crawled " + str(now))
+		else:
+			print("Invite crawl aborted")
 
 	async def find_possible_invites(self, guild):
 		t = 1
