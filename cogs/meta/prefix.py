@@ -10,6 +10,9 @@ class prefix(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.default_prefix = '!'
+    
+    def validate_settings(self, settings, guild):
+        return True
 
 
     @commands.has_permissions(administrator=True)
