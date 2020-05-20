@@ -27,42 +27,25 @@ class logs(commands.Cog):
 		pass
 
 	def validate_settings(self, settings, guild):
-		try:
-			if settings["enabled"]:
+		if settings["enabled"]:
 
+			try:
+				channels = settings['channels']
+			except KeyError:
+				return f"logs, Missing field Channels"
+
+			for channel in self.valid_channels:
 				try:
-					channels = settings['channels']
+					menu_entry = settings["channels"][channel]
+					if not menu_entry == "disabled":
+						actual_channel = guild.get_channel(settings["channels"][menu_entry])
+						if actual_channel == None:
+							return f"logs: {channel} not found"
 				except KeyError:
-					return f"logs, Missing field Channels"
+					pass
 
-				for channel in self.valid_channels:
-					try:
-						menu_entry = settings["channels"][channel]
-						if not menu_entry == "disabled":
-							actual_channel = guild.get_channel(settings["channels"][menu_entry])
-							if actual_channel == None:
-								return f"logs: {channel} not found"
-					except KeyError:
-						pass
 
-		# vc_log_channel = guild.get_channel(settings["channels"]["vc_log_channel"])
-		# if vc_log_channel == None:
-		# 	return "logs: vc log channel not found"
-		# ban_log_channel = guild.get_channel(settings["channels"]["ban_log_channel"])
-		# if ban_log_channel == None:
-		# 	return "logs: ban log channel not found"
-		# join_log_channel = guild.get_channel(settings["channels"]["join_log_channel"])
-		# if join_log_channel == None:
-		# 	return "logs: join log channel not found"
-		# member_update_log_channel = guild.get_channel(settings["channels"]["member_update_log_channel"])
-		# if member_update_log_channel == None:
-		# 	return "logs: member update log channel not found"
-		# text_chat_log_channel = guild.get_channel(settings["channels"]["text_chat_log_channel"])
-		# if text_chat_log_channel == None:
-		# 	return "logs: text chat log channel not found"
 
-		except KeyError as e:
-			return f"logs: Missing field: enabled"
 
 		return True
 
