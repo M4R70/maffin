@@ -147,7 +147,7 @@ class logs(commands.Cog):
 			e.add_field(name="new", value=f"{after.display_name}", inline=False)
 			post = True
 		elif before.roles != after.roles:
-			pass  # TODO roles
+			pass  # TODO.txt roles
 		if post:
 			try:
 				await channel.send(embed=e)

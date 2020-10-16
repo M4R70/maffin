@@ -1,69 +1,70 @@
 from discord.ext import commands
+import discord
 import json
-import os
 import logging
+from utils.exceptions import report_meta
+import sys
 import traceback
-import utils.db
 
-default_prefix = '!'
+# import utils.db
+
+
+intents = discord.Intents.default()
+intents.members = True
 
 with open('creds.json', 'r') as f:
 	creds = json.load(f)
 	token = creds["token"]
 
 
-def load_all_cogs():
+async def load_all_cogs():
 	try:
-		bot.load_extension('cogs.cogMan')  # first load the cogMan cog
+		bot.load_extension('cogs.meta.cogMan')  # first load the cogMan cog
 	except Exception as e:
-		print("""**Traceback:**\n```{0}```\n""".format(
-			' '.join(traceback.format_exception(None, e, e.__traceback__))))
-		print(f"Error loading cogMan, Aborting")
-		quit()
-	try:
-		cog_man = bot.cogs['cogMan']
-		for cog in os.listdir('cogs/meta'):  # then load the meta cogs
-			if cog.endswith('.py'):
-				cog_man._load_cog('meta.' + cog[:-3])
-		for cog in os.listdir('cogs/dev'):  # then load dev tools
-			if cog.endswith('.py'):
-				cog_man._load_cog('dev.' + cog[:-3])
-		for cog in os.listdir('cogs/feature'):  # lastly, load feature cogs
-			if cog.endswith('.py'):
-				cog_man._load_cog('feature.' + cog[:-3])
-	except Exception as e:
-		print("""**Traceback:**\n```{0}```\n""".format(
-			' '.join(traceback.format_exception(None, e, e.__traceback__))))
-		print(f"Error loading {cog_man.last}, Aborting")
+		await report_meta(e)
 		quit()
 
-	print("Done loading cogs \n \n")
+	try:
+		cogMan = bot.cogs['cogMan']
+		logging.info("loaded cogMan")
+		await cogMan.load_all_cogs()
+	except Exception as e:
+		await report_meta(e)
 
 
-async def get_pre(bot, message):
-	res = [f"<@!{bot.user.id}> "]
-	db_info = await utils.db.findOne('prefixes', {'guild_id': message.guild.id})
-	if db_info is None:
-		res.append(default_prefix)
-	else:
-		res.append(db_info['prefix'])
+bot = commands.AutoShardedBot(command_prefix='!', formatter=None, description=None, pm_help=False,
+							  max_messages=50000, intents=intents,guild_subscriptions=True,fetch_offline_members=True)
 
-	return res
-
-
-bot = commands.AutoShardedBot(command_prefix=get_pre, formatter=None, description=None, pm_help=False,
-							  max_messages=50000)
 logging.basicConfig(level=logging.INFO)
-
-load_all_cogs()
 
 
 @bot.event
 async def on_ready():
-	print(f" \n \n Logged in as {bot.user}")
-	print(f"ID: {bot.user.id}")
-	print(f"invite: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot")
-	print("----------READY!---------- \n \n")
+	logging.info(f" \n \n Logged in as {bot.user}")
+	logging.info(f"ID: {bot.user.id}")
+	logging.info(f"invite: https://discordapp.com/api/oauth2/authorize?client_id={bot.user.id}&permissions=8&scope=bot")
+	await load_all_cogs()
+	logging.info("----------READY!---------- \n \n")
+
+
+@bot.event
+async def on_command_error(ctx, error):
+	if isinstance(error, commands.errors.CheckFailure):
+		pass
+	else:
+		print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+		traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
 bot.run(token)
+
+# async def get_pre(bot, message):
+# 	default_prefix = '!'
+# 	res = [f"<@!{bot.user.id}> "]
+# 	db_info = await utils.db.findOne('prefixes', {'guild_id': message.guild.id})
+# 	if db_info is None:
+# 		res.append(default_prefix)
+# 	else:
+# 		res.append(db_info['prefix'])
+#
+# 	return res
