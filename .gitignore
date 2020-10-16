@@ -1,3 +1,4 @@
 *.idea
 creds.json
 venv/
+*__pycache__*
