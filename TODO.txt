@@ -1,6 +1,5 @@
 Port Old Cogs
-    Logs
-        might be able to improve code quality
+
     Moderation
         Add kick/ban with reason and good interaction with logs
     ReactionRoles

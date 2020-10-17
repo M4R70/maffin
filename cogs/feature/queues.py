@@ -2,7 +2,7 @@ from discord.ext import commands
 import utils.db as db
 import discord
 import random
-from utils.checks import is_host, is_cog_enabled, is_allowed_in_config,dev
+from utils.checks import is_host, is_cog_enabled, is_allowed_in_config, dev
 
 
 async def is_queue_in_channel(ctx):
@@ -30,7 +30,7 @@ async def get_linked_queue(vc):
 	del all_queues['field_name']
 
 	for queue in all_queues.values():
-		if int(queue.get('linked_vc_id',"0")) == vc.id:
+		if int(queue.get('linked_vc_id', "0")) == vc.id:
 			res = queue, vc.guild.get_channel(int(queue['channel_id']))
 			if res is not None:
 				return res
@@ -323,33 +323,6 @@ class Queues(commands.Cog):
 		if queue['closed']:
 			e.set_footer(text="the queue is closed")
 		await ctx.send(embed=e)
-
-	@dev()
-	@commands.command()
-	async def set_host(self, ctx, role: discord.Role):
-		"""shortcut to set target role as host"""
-		current_perms = await db.get_setting(ctx.guild.id, 'permissions')
-
-		admin_commands = ['qcreate', 'qdelete']
-
-		commands = [x.name for x in ctx.cog.get_commands()]
-
-		for command in commands:
-			command = str(command).lower()
-			if command not in admin_commands:
-				if command not in current_perms.keys():
-
-					current_perms[command] = []
-				elif not isinstance(current_perms[command],list):
-
-					current_perms[command] = [current_perms[command]]
-				else:
-					current_perms[command].append(role.id)
-				print(current_perms[command])
-				update = {'$set': {command: current_perms[command]}}
-				await db.update_setting(ctx.guild.id, 'permissions', update)
-
-		await ctx.send("Done :thumbsup:")
 
 	async def cog_check(self, ctx):
 		res = await is_cog_enabled(ctx)

@@ -6,6 +6,7 @@ import logging
 from collections import defaultdict
 import timeago
 import datetime
+import asyncio
 
 
 async def get_channel(guild, channel_name):
@@ -308,7 +309,8 @@ class Logging(commands.Cog):
 
 	@commands.has_permissions(ban_members=True)
 	@commands.guild_only()
-	@commands.command()
+	@commands.command(hidden=True)
+
 	async def add_reason(self, ctx, message_id: int, *, reason: str):
 		channel = await get_channel(ctx.guild, 'ban_log_channel_id')
 		if channel is None:
