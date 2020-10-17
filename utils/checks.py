@@ -18,7 +18,7 @@ def has_roles(user, role_ids):
 		role_ids = [role_ids]
 
 	for role_id in role_ids:
-		if int(role_id) in [r.id for r in user.roles]:
+		if str(role_id) in [str(r.id) for r in user.roles]:
 			return True
 
 	return False

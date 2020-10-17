@@ -18,14 +18,14 @@ def pretty_yaml_dump(dict):
 	return ' '.join(res)
 
 
-def embed_list(embed, list,dict=None):
+def embed_list(embed, list, dict=None):
 	if dict is None:
 		for x in list:
 			if x is not None:
 				embed.add_field(name=str(x), value="\u200b")
 		return embed
 	else:
-		for k,v in dict.items():
+		for k, v in dict.items():
 			embed.add_field(name=k, value=v)
 		return embed
 
@@ -121,7 +121,17 @@ class Settings(commands.Cog):
 
 	@commands.command()
 	@dev()
+	async def reset_perms(self, ctx):
+		current_perms = await db.get_setting(ctx.guild.id, 'permissions')
+		for perm in current_perms.keys():
+			if perm not in ['_id','field_name','server_id']:
+				await db.update_setting(ctx.guild.id, 'permissions', {'$set': {perm: []}})
+		await ctx.send(":thumbsup:")
+
+	@commands.command()
+	@dev()
 	async def show_settings(self, ctx):  # make this with embeds, no yaml
+
 		all_settings = await db.get_all_settings(ctx.guild.id)
 		# del all_settings['permissions']
 		# del all_settings['existing_queues']
@@ -133,9 +143,8 @@ class Settings(commands.Cog):
 			del setting['field_name']
 			e = discord.Embed()
 			e.title = name
-			embed_list(e,[],dict=setting)
+			embed_list(e, [], dict=setting)
 			await ctx.send(embed=e)
-
 
 	@dev()
 	@commands.group()
@@ -180,11 +189,13 @@ class Settings(commands.Cog):
 				await ctx.send(f"{name} is not a valid command")
 				return
 
+			print(perms)
 			allowed = perms[name]
+
 			if not isinstance(allowed, list):
 				allowed = [allowed]
 
-			roles = [ctx.guild.get_role(int(x)) for x in allowed]
+			roles = [ctx.guild.get_role(x) for x in allowed]
 			e = discord.Embed()
 			e.title = f"Roles allowed to use command {name} are: \n "
 			e = embed_list(e, roles)
