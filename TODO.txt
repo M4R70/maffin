@@ -31,11 +31,42 @@ Port Old Cogs
                     Find periods when there is no mods/hosts
                     View individual channel activity
 
+         Data Points:
+            Member send message [user_id,channel_id,time,message_lenght]
+            Member joins vc [user_id,channel_id,time]
+            Member moves vc [user_id,old_channel_id,new_channel_id,time] //might be modeled as a leave and a join
+            Member leaves vc [user_id,channel_id,time]
+
+
+        !activity_report <user/server/channel/role(s)> <ndays> <--no_graphs> <--separate_images>:
+            Embed:
+                Joined x time ago
+                Usual activity times
+                Total vc mins
+                Total chars sent
+                Total qj
+                total qn
+                activity score/number of days
+
+            Plots:
+                total chars/vc mins/qn & qj per day barchart
+                x axis 24hs y axis characters sent/vc, 7 lines, one per day of the week (visualize timezone/usual online time)
+                voice/text  channel pie chart
+
+
+        !inactive @role <ndays> <threshold>
+
+        !host_candidates <ndays> <top x>
+
+
+
+
+
 Add features
 
     Settings
         Shortcuts
-            Quick set host role
+            Quick set host role Tick
         Defaults
             Mods set as host
             Everything disabled
@@ -47,22 +78,22 @@ DevOps:
 
 
 
-    Game:
-        earn points
-            !moneyz - can be used every 30 mins, gives 10 points
-            random "React to this to get 20-50 points"
-            incremental game, with voice chat time / messages (starts at zero)
+Game:
+    earn points
+        !moneyz - can be used every 30 mins, gives 10 points
+        random "React/type this to get 20-50 points"
+        incremental game, with voice chat time / messages (starts at zero)
 
-        Shop:
-            buy upgrades
-                !moneyx combos/flat rates/less cd
-                %bonus on random pickups/chance of doubling
-                item that gives points per chat message/voice mins (many tiers, can be stacked)
+    Shop:
+        buy upgrades
+            !moneyx combos/flat rates/less cd
+            %bonus on random pickups/chance of doubling
+            item that gives points per chat message/voice mins (many tiers, can be stacked)
 
-            sell something that people actually want lol
+        sell something that people actually want lol
 
-        Game Profile:
-            Show money
-            Show total bonuses for each category
+    Game Profile:
+        Show money
+        Show total bonuses for each category
 
 
