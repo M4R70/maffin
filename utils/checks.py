@@ -31,15 +31,19 @@ async def is_host(guild_id, user):
 	return res
 
 
-async def is_cog_enabled(ctx,guild_id=None):
+async def is_cog_enabled(ctx,guild_id=None,cogName=None):
 
 	try:
 		if hasattr(ctx,'guild'):
 			config = await db.get_setting(ctx.guild.id, 'modules_enabled')
-			return config[ctx.command.cog_name.lower()]
+			if config is None:
+				return False
+			return config.get(ctx.command.cog_name.lower(),False)
 		else:
 			config = await db.get_setting(guild_id, 'modules_enabled')
-			return config[ctx.lower()]
+			if config is None:
+				return False
+			return config.get(cogName.lower(),False)
 	except KeyError:
 		return True
 

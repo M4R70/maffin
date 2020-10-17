@@ -55,6 +55,9 @@ async def get_setting(server_id, field_name):
 	collection = f'settings.s{server_id}'
 	query = {'field_name': field_name}
 	res = await db[collection].find_one(query)
+	if res is None:
+		res = {}
+
 	return res
 
 

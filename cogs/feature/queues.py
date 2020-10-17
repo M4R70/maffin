@@ -30,7 +30,7 @@ async def get_linked_queue(vc):
 	del all_queues['field_name']
 
 	for queue in all_queues.values():
-		if int(queue['linked_vc_id']) == vc.id:
+		if int(queue.get('linked_vc_id',"0")) == vc.id:
 			res = queue, vc.guild.get_channel(int(queue['channel_id']))
 			if res is not None:
 				return res
