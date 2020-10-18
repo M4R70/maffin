@@ -1,10 +1,12 @@
 Port Old Cogs
 
-    Moderation
-        Add kick/ban with reason and good interaction with logs
-    ReactionRoles
-        Probably needs major refactor/rework (hide channel to avoid pinging people)
-        Make sure that messages that no longer exist get cleaned from db
+    ReactionRoles Almost Done
+        Check that it shows well in show_settings
+        check that !post_rr_group deletes trash db entries
+        make exclusive reactions actally exclusive
+        ???
+        profit
+
 
     StaffPing
 

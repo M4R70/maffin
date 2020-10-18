@@ -219,6 +219,12 @@ class Logging(commands.Cog):
 			return
 
 		entry = await search_entry(guild, user, discord.AuditLogAction.ban)
+		if entry.user == self.bot.user:
+			banner = self.bot.cogs['Moderation'].mod_register['ban'].get(user.id)
+			if banner is not None:
+				entry.user = banner
+
+
 		e = member_embed(user, title="BAN", color=discord.Colour.red(), entry=entry)
 
 		e.add_field(name="Reason", value=entry.reason)
@@ -310,7 +316,6 @@ class Logging(commands.Cog):
 	@commands.has_permissions(ban_members=True)
 	@commands.guild_only()
 	@commands.command(hidden=True)
-
 	async def add_reason(self, ctx, message_id: int, *, reason: str):
 		channel = await get_channel(ctx.guild, 'ban_log_channel_id')
 		if channel is None:
