@@ -139,8 +139,12 @@ class Settings(commands.Cog):
 
 		for setting in all_settings:
 			del setting['_id']
-			name = setting['field_name']
-			del setting['field_name']
+			try:
+				name = setting['field_name']
+				del setting['field_name']
+			except:
+				print(setting)
+
 			e = discord.Embed()
 			e.title = name
 			embed_list(e, [], dict=setting)

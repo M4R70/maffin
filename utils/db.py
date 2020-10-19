@@ -28,7 +28,7 @@ async def update_queue(server_id, channel_id, new_queue):
 
 
 async def delete_queue(server_id, channel_id):
-	await update_queue(server_id,channel_id,{'channel_id':channel_id})
+	await update_queue(server_id, channel_id, {'channel_id': channel_id})
 
 
 # -----------------------------------------------------------------------------
@@ -51,6 +51,12 @@ async def update_setting(server_id, field_name, update):
 	await db[collection].update_one(query, update, upsert=True)
 
 
+async def remove_setting(server_id, field_name, update):
+	collection = f'settings.s{server_id}'
+	query = {'field_name': field_name}
+	await db[collection].remove(query, update, upsert=True)
+
+
 async def get_setting(server_id, field_name):
 	collection = f'settings.s{server_id}'
 	query = {'field_name': field_name}
@@ -64,7 +70,7 @@ async def get_setting(server_id, field_name):
 async def get_all_settings(server_id):
 	collection = f'settings.s{server_id}'
 	query = {}
-	cursor =  db[collection].find(query)
+	cursor = db[collection].find(query)
 	res = await cursor.to_list(length=999999999)
 	return res
 # -----------------------------------------------------------------------------

@@ -12,7 +12,7 @@ class Moderation(commands.Cog):
 
 	def __init__(self, bot):
 		self.bot = bot
-		self.mod_register = {"ban": {},'kick':{}}
+		self.mod_register = {"ban": {}, 'kick': {}}
 
 	@commands.Cog.listener()
 	async def on_member_remove(self, member):
@@ -31,7 +31,7 @@ class Moderation(commands.Cog):
 	@commands.command()
 	async def kick(self, ctx, member: discord.Member, reason=None):
 		"""kicks a member"""
-		#self.mod_register['kick'][member.id] = ctx.author
+		# self.mod_register['kick'][member.id] = ctx.author
 		await member.ban(reason=reason)
 
 	@commands.has_guild_permissions(mute_members=True)
@@ -72,7 +72,7 @@ class Moderation(commands.Cog):
 					elif not should_mute:
 						await member.edit(mute=False)
 
-					await db.update_setting(member.guild.id, 'to_be_server_muted', {"$unset": {str(member.id): None}})
+					await db.update_setting(member.guild.id, 'to_be_server_muted', {"$unset": {str(member.id): 1}})
 
 	@commands.guild_only()
 	@commands.command()

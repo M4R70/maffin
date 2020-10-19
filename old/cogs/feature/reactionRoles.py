@@ -21,7 +21,7 @@ class reactionRoles(commands.Cog):
 		self.bot = bot
 		self.db = utils.db.client()
 		self.default_emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣',
-							   '🔟', '🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮',
+							   '🔟🔟🔟', '🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮',
 							   '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸',
 							   '🇹', '🇺', '🇻', '🇼', '🇽', '🇾', '🇿']
 
@@ -280,7 +280,7 @@ def fake_mention(role):
 def is_in_category(guild, r, category):
 	topSeparator = [r for r in guild.roles if r.name == f"<{category}>"][0]
 	bottomSeparator = [r for r in guild.roles if r.name == f"</{category}>"][0]
-	return (r < topSeparator and r > bottomSeparator)
+	return r < topSeparator and r > bottomSeparator
 
 
 def get_category_roles(guild, category):

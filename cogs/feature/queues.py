@@ -26,8 +26,11 @@ async def insert_new_queue(ctx, server_id=None, channel_id=None):
 
 async def get_linked_queue(vc):
 	all_queues = await db.get_setting(vc.guild.id, 'existing_queues')
-	del all_queues['_id']
-	del all_queues['field_name']
+	try:
+		del all_queues['_id']
+		del all_queues['field_name']
+	except KeyError:
+		pass
 
 	for queue in all_queues.values():
 		if int(queue.get('linked_vc_id', "0")) == vc.id:

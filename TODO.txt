@@ -1,12 +1,11 @@
 Port Old Cogs
 
     ReactionRoles Almost Done
-        Check that it shows well in show_settings
-        check that !post_rr_group deletes trash db entries
-        make exclusive reactions actally exclusive
-        ???
-        profit
-
+        No le creo NADA
+        problems with auto update:
+            remove reactions and remove role if they already have it, no need to stack reactions
+            a category might be deleted or created on update
+        while updating, it might ping people, not cool (manual update with -f flag? rip auto)
 
     StaffPing
 
@@ -66,11 +65,8 @@ Port Old Cogs
 Add features
 
     Settings
-        Shortcuts
-            Quick set host role Tick
+        tailor made settings visualization with embeds, account for large embeds and useless data for the user
         Defaults
-            Mods set as host
-            Everything disabled
 
 DevOps:
     Dockerize
