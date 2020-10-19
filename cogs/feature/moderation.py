@@ -14,11 +14,11 @@ class Moderation(commands.Cog):
 		self.bot = bot
 		self.mod_register = {"ban": {}, 'kick': {}}
 
-	@commands.Cog.listener()
-	async def on_member_remove(self, member):
-		if member.voice.mute:
-			await db.update_setting(member.guild.id, 'to_be_server_muted', {"$set": {str(member.id): True}})
-		return
+	# @commands.Cog.listener()
+	# async def on_member_remove(self, member):
+	# 	if member.voice.mute:
+	# 		await db.update_setting(member.guild.id, 'to_be_server_muted', {"$set": {str(member.id): True}})
+	# 	return
 
 	@commands.has_guild_permissions(ban_members=True)
 	@commands.command()
@@ -62,6 +62,13 @@ class Moderation(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
+		if before.mute and not after.mute:
+			await db.update_setting(member.guild.id,'to_be_server_muted',{"$unset":{str(member.id):1}})
+			return
+		elif not before.mute and after.mute:
+			await db.update_setting(member.guild.id,'to_be_server_muted',{"$set":{str(member.id):True}})
+			return
+
 		if before.channel != after.channel:
 			if before.channel is None or before.afk and after.channel is not None:
 				db_info = await db.get_setting(member.guild.id, 'to_be_server_muted')
@@ -121,6 +128,9 @@ class Moderation(commands.Cog):
 		msg = await ctx.channel.send("**Cleared** :thumbsup:")
 		await msg.delete(delay=1)
 
+	async def cog_check(self, ctx):
+		res = await is_cog_enabled(ctx)
+		return res
 
 def setup(bot):
 	bot.add_cog(Moderation(bot))

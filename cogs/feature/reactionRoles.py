@@ -12,14 +12,24 @@ emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣'
 
 
 def make_message(category_data, all_guild_roles):
-	msg = '\u200b\n' + category_data['readable_name'] + ':\n'
+	msg =''
+	if not category_data['first']:
+		msg += '\u200b\n'
+		print('asd')
+	msg +=  category_data['readable_name'] + ':\n'
 	used_emojis = {}
-	for i in range(category_data['bottom_separator_index'] + 1, category_data['top_separator_index']):
+	j = 0
+	for i in reversed(range(category_data['bottom_separator_index'] + 1, category_data['top_separator_index'])):
 		r = all_guild_roles[i]
-		emoji = emojis[i - category_data['bottom_separator_index'] - 1]
+		emoji = emojis[j]
+		j+=1
 		msg += ':small_blue_diamond:  ' + emoji + ' ' + fake_mention(r) + '\n'
 		used_emojis[emoji] = r.id
 	category_data['used_emojis'] = used_emojis
+	if category_data['exclusive']:
+		msg+= '\n NOTE: *you may only have one of the roles in this category*'
+
+
 
 	return msg, category_data
 
@@ -83,6 +93,7 @@ class ReactionRoles(commands.Cog):
 		"""Post a group of reaction role categories"""
 
 		db_info = await db.get_setting(ctx.guild.id, 'reactionRoles')
+		update = {}
 		ids = list(db_info.keys())
 		ids = [x for x in ids if x not in ['_id', 'field_name']]
 		to_unset = []
@@ -95,31 +106,29 @@ class ReactionRoles(commands.Cog):
 					await channel.fetch_message(int(msg_id))
 				except discord.errors.NotFound:
 					to_unset.append(msg_id)
-			for x in to_unset:
-				if x not in ["_id", 'field_name']:
-					print(x)
-					await db.update_setting(ctx.guild.id, 'reactionRoles', {"$unset": {x: 1}})
+
+			unset = {x:1 for x in to_unset}
+			await db.update_setting(ctx.guild.id, 'reactionRoles', {"$unset": unset})
 
 		first = True
 		bot_user = ctx.guild.get_member(self.bot.user.id)
 		if bot_user.guild_permissions.mention_everyone and flag != "-f":
 			await ctx.send('remove mention everyone permission from bot or use -f flag')
 			return
-		categories = []
 		roles = ctx.guild.roles
-		for i in range(len(roles)):  # abajo para arriba
+		for i in reversed(range(len(roles))):
 			r = roles[i]
-			if r.name.startswith('</' + groupPrefix):
+			if r.name.startswith('<' + groupPrefix):
 				category_data = {}
-				for j in range(r.position, len(roles)):
-					if roles[j].name.startswith('<' + groupPrefix):
-						category_data["top_separator_index"] = j
-						category_data["bottom_separator_index"] = i
+				for j in range(r.position, 0,-1):
+					if roles[j].name.startswith('</' + groupPrefix):
+						category_data["top_separator_index"] = i
+						category_data["bottom_separator_index"] = j
 						category_data['exclusive'] = False
 						category_data['groupPrefix'] = groupPrefix
 						category_data['channel_id'] = ctx.channel.id
-						category_data['bottom_separator_id'] = roles[i].id
-						category_data['top_separator_id'] = roles[j].id
+						category_data['bottom_separator_id'] = roles[j].id
+						category_data['top_separator_id'] = roles[i].id
 						readable_name = r.name[len(groupPrefix) + 2:-1]
 
 						if readable_name.endswith('_ex'):
@@ -128,12 +137,11 @@ class ReactionRoles(commands.Cog):
 
 						readable_name = readable_name.strip()
 						category_data['readable_name'] = readable_name
-						categories.append(category_data)
+						category_data['first'] = first
+						first = False
 						txt, category_data = make_message(category_data, roles)
 						used_emojis = category_data['used_emojis']
-						if first:
-							txt = txt[2:]
-							first = False
+
 						message = await ctx.send(txt)
 
 						for e in emojis:
@@ -141,35 +149,29 @@ class ReactionRoles(commands.Cog):
 								await message.add_reaction(e)
 							else:
 								break
-
+						update[str(message.id)] = category_data
 						break
-				await db.update_setting(ctx.guild.id, 'reactionRoles',
-										{"$set": {str(message.id): category_data}})
+		await db.update_setting(ctx.guild.id, 'reactionRoles',
+								{"$set": update})
+		await ctx.message.delete()
 
-	@commands.Cog.listener()
-	async def on_guild_role_update(self, before, after):
 
-		guild = before.guild
-		old_cat_fixed = False
-		new_cat_fixed = False
-		if before.position != after.position:
-			# await fix_category_indices(guild)
-			db_info = await db.get_setting(guild.id, 'reactionRoles')
-			del db_info['_id']
-			del db_info['field_name']
-			for message_id, category in db_info.items():
-				before_in_cat = category['bottom_separator_index'] <= before.position <= category['top_separator_index']
-				after_in_cat = category['bottom_separator_index'] <= after.position <= category['top_separator_index']
-				# print(
-				# 	f"{category['readable_name']} {category['bottom_separator_index']} {before.position} {after.position} {category['top_separator_index']}")
-				if after_in_cat:
-					new_cat_fixed = True
-					await self.fix_message(category, guild, message_id)
-				elif before_in_cat:
-					old_cat_fixed = True
-					await self.fix_message(category, guild, message_id)
-				if old_cat_fixed and new_cat_fixed:
-					break
+	@dev()
+	@commands.command()
+	async def rr_update(self,ctx, flag=None):
+		"""update existing reaction role messages"""
+		bot_user = ctx.guild.get_member(self.bot.user.id)
+		if bot_user.guild_permissions.mention_everyone and flag != "-f":
+			await ctx.send('remove mention everyone permission from bot or use -f flag')
+			return
+		guild = ctx.guild
+		db_info = await db.get_setting(guild.id, 'reactionRoles')
+		del db_info['_id']
+		del db_info['field_name']
+		for message_id, category in db_info.items():
+			await self.fix_message(category, guild, message_id)
+		await ctx.message.delete()
+
 
 	@commands.Cog.listener()
 	async def on_raw_reaction_add(self, payload):
@@ -189,34 +191,11 @@ class ReactionRoles(commands.Cog):
 		if db_info['exclusive']:
 			for r_emoji, role_id in db_info['used_emojis'].items():
 				if r_emoji != emoji:
-					await message.remove_reaction(r_emoji, user)
 					r = guild.get_role(role_id)
 					await user.remove_roles(r)
 		await user.add_roles(role)
+		await message.remove_reaction(emoji,user)
 
-	@commands.Cog.listener()
-	async def on_raw_reaction_remove(self, payload):
-
-		guild, channel, message, user, emoji = await self.parse_payload(payload)
-
-		if user.id == self.bot.user.id:
-			return
-
-		db_info = await db.get_setting(guild.id, 'reactionRoles')
-		db_info.get(message.id)
-
-		if db_info is None:
-			return
-
-		try:
-			role_id = int(db_info[str(message.id)]['used_emojis'][emoji])
-		except KeyError:
-
-			return
-
-		role = guild.get_role(role_id)
-
-		await user.remove_roles(role)
 
 	async def parse_payload(self, payload):
 		guild = self.bot.get_guild(payload.guild_id)
@@ -228,19 +207,9 @@ class ReactionRoles(commands.Cog):
 		return guild, channel, message, user, emoji
 
 	async def fix_message(self, orig_category, guild, message_id):
-		my_order = self.updating[guild].get(message_id, 0)
-		self.updating[guild][message_id] = my_order + 1
-		last = self.updating[guild][message_id]
-		await asyncio.sleep(10)
-		while self.updating[guild][message_id] != last:
-			last = self.updating[guild][message_id]
-			await asyncio.sleep(5)
-		if my_order + 1 != last:
-			return
 
 		category = fix_separator_indexes(dict(orig_category), guild)
 		txt, category = make_message(category, guild.roles)
-
 		if category['used_emojis'] != orig_category['used_emojis'] or category['readable_name'] != orig_category['readable_name']:
 			channel = guild.get_channel(category['channel_id'])
 			message = await channel.fetch_message(message_id)
@@ -251,8 +220,11 @@ class ReactionRoles(commands.Cog):
 					await message.add_reaction(e)
 				# print(e)
 
-		await db.update_setting(guild.id, 'reactionRoles', {"$set": {str(message.id): category}})
+			await db.update_setting(guild.id, 'reactionRoles', {"$set": {str(message.id): category}})
 
+	async def cog_check(self, ctx):
+		res = await is_cog_enabled(ctx)
+		return res
 
 def setup(bot):
 	bot.add_cog(ReactionRoles(bot))
