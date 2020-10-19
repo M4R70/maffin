@@ -44,6 +44,18 @@ async def delete_queue(server_id, channel_id):
 #
 # 	return res
 
+async def insert(server_id, collection, doc):
+	collection = f'{collection}.s{server_id}'
+	await db[collection].insert_one(doc)
+
+
+async def get(server_id, collection, query, list=False):
+	collection = f'{collection}.s{server_id}'
+	res = db[collection].find(query)
+	if list:
+		res = await cursor.to_list(length=999999999)
+	return res
+
 
 async def update_setting(server_id, field_name, update):
 	collection = f'settings.s{server_id}'

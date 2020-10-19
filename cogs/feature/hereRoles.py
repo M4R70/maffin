@@ -4,7 +4,8 @@ import discord
 from utils import db
 from utils.checks import is_cog_enabled
 
-class StaffPing(commands.Cog):
+
+class HereRoles(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 		self.open_cases = defaultdict(lambda: [])
@@ -18,13 +19,13 @@ class StaffPing(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_message(self, message):
-		enabled = await is_cog_enabled(None,message.guild.id,'staffPing')
+		enabled = await is_cog_enabled(None, message.guild.id, 'hereRoles')
 		if not enabled:
 			return
 		mentioned_ids = [r.id for r in message.role_mentions]
 		if not mentioned_ids:
 			return
-		settings = await db.get_setting(message.guild.id, 'staffPing')
+		settings = await db.get_setting(message.guild.id, 'hereRoles')
 		for r_id in mentioned_ids:
 			if str(r_id) in settings:
 				ping_channel = message.guild.get_channel(settings[str(r_id)])
@@ -50,4 +51,4 @@ class StaffPing(commands.Cog):
 
 
 def setup(bot):
-	bot.add_cog(StaffPing(bot))
+	bot.add_cog(HereRoles(bot))
