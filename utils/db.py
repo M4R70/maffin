@@ -53,7 +53,7 @@ async def get(server_id, collection, query, list=False):
 	collection = f'{collection}.s{server_id}'
 	res = db[collection].find(query)
 	if list:
-		res = await cursor.to_list(length=999999999)
+		res = await res.to_list(length=999999999)
 	return res
 
 

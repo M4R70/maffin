@@ -62,11 +62,14 @@ Add features
 
     Logging
         !add_reason could be more user friendly (maybe react/prompt)
+
     Queues:
         long queues (more than 24)
+
     Moderation:
         server mute ask for reason,?
         people get self unmuted when no reason is added?
+
     Events
         event mode (mute people for the first 10 mins?)
         move people from one vc to another command
