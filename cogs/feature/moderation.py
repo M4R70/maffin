@@ -5,6 +5,7 @@ import discord
 import utils.db
 import datetime
 import utils.db as db
+from utils.checks import is_cog_enabled
 
 
 class Moderation(commands.Cog):

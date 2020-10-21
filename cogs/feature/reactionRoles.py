@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 import utils.db as db
-from utils.checks import dev
+from utils.checks import dev,is_cog_enabled
 import asyncio
 from collections import defaultdict
 

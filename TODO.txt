@@ -1,5 +1,7 @@
 Port Old Cogs
 
+    Match connect and disconnect vc session on disconnect/move might be easier
+
     Analytics
         Uses:
             individual activity:
@@ -31,6 +33,7 @@ Port Old Cogs
 
 
         !activity_report <user/server/channel/role(s)> <ndays> <--no_graphs> <--separate_images>:
+
             Embed:
                 Joined x time ago
                 Usual activity times

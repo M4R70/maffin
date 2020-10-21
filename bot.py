@@ -32,7 +32,7 @@ async def load_all_cogs():
 		await report_meta(e)
 
 
-bot = commands.AutoShardedBot(command_prefix='!', formatter=None, description=None, pm_help=False,
+bot = commands.AutoShardedBot(command_prefix='r!', formatter=None, description=None, pm_help=False,
 							  max_messages=50000, intents=intents,guild_subscriptions=True,fetch_offline_members=True)
 
 logging.basicConfig(level=logging.INFO)

@@ -79,7 +79,7 @@ class Settings(commands.Cog):
 		enabled = []
 		disabled = []
 		for x in self.bot.cogs.keys():
-			if await is_cog_enabled(x, guild_id=ctx.guild.id):
+			if await is_cog_enabled(None,guild_id=ctx.guild.id,cogName=x):
 				enabled.append(x)
 			else:
 				disabled.append(x)
