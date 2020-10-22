@@ -34,7 +34,7 @@ class Settings(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
-	async def allow_disallow_perm(self, name, role, action):
+	async def allow_disallow_perm(self, name, role, action,ctx):
 		if name not in [str(x) for x in self.bot.commands]:
 			await ctx.send(f"{name} is not a valid command")
 			return
@@ -159,12 +159,12 @@ class Settings(commands.Cog):
 
 	@perms.command()
 	async def allow(self, ctx, name: str, role: discord.Role):
-		await self.allow_disallow_perm(name, role, "allow")
+		await self.allow_disallow_perm(name, role, "allow",ctx)
 		await ctx.send("Done :thumbsup:")
 
 	@perms.command()
 	async def deny(self, ctx, name: str, role: discord.Role):
-		await self.allow_disallow_perm(name, role, "deny")
+		await self.allow_disallow_perm(name, role, "deny",ctx)
 		await ctx.send("Done :thumbsup:")
 
 	@perms.command()

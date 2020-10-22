@@ -1,70 +1,22 @@
-Port Old Cogs
-    Analytics
-        Uses:
-            individual activity:
-                See how active regular user is
-                    text messages
-                    minutes in voice chat
-                    pie chart of channels? (al pe2)
-
-                Find inactive <hosts/staff> <n> <y>
-                    set n number of days
-                    find users who spent less than y * 10 mins/ sent less than y messages in the period
-
-                Find most active non host/staff in the last n days
-
-            server wide:
-
-                Find periods of high activity (best time for events)
-                Find periods where the server is dead
-                Find periods when there is no mods/hosts
-                View individual channel activity
-
-         Data Points:
-            Member send message [user_id,channel_id,time,message_lenght]
-            Member joins vc [user_id,channel_id,time]
-            Member moves vc [user_id,old_channel_id,new_channel_id,time] //might be modeled as a leave and a join
-            Member leaves vc [user_id,channel_id,time]
-
-            !qn, !qj @staffPing?
-
-
-        !activity_report <user/server/channel/role(s)> <ndays> <--no_graphs> <--separate_images>:
-
-            Embed:
-                Joined x time ago
-                Usual activity times
-                Total vc mins
-                Total chars sent
-                activity score/number of days
-            Plots:
-                total chars/vc mins per day barchart
-                x axis 24hs y axis characters sent/vc, 7 lines, one per day of the week (visualize timezone/usual online time)
-                voice/text  channel pie chart
-
-
-        !inactive @role <ndays> <threshold>
-
-        !host_candidates <ndays> <top x>
-
-        count n of members with role
-
-
-
 Add features
+    Logging:
+        Role perms modification
+        Create Role
+
+        Channel perms mod
+        Create Channel
+        Delete Channel
+
+    Analytics:
+        !inactive @role <ndays> <threshold>
+        !host_candidates <ndays> <top x>
 
     Settings
         tailor made settings visualization with embeds, account for large embeds and useless data for the user
         Defaults
 
-    ReactionRoles:
-        make a message a rr message manually
-
     Logging
         !add_reason could be more user friendly (maybe react/prompt)
-
-    Queues:
-        long queues (more than 24)
 
     Moderation:
         server mute ask for reason,?
@@ -73,6 +25,9 @@ Add features
     Events
         event mode (mute people for the first 10 mins?)
         move people from one vc to another command
+
+    ReactionRoles:
+        make a message a rr message manually
 
     steal r danny's help formatter? make it better at least
 

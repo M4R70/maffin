@@ -20,5 +20,5 @@ def convert_int(thing, max=None, min=None):
 			if n < min:
 				return None
 		return n
-	except ValueError:
+	except (ValueError,OverflowError):
 		return None

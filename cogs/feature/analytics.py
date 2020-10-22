@@ -2,13 +2,14 @@ from collections import defaultdict
 from discord.ext import commands
 import discord
 from utils import db
-from utils.checks import is_cog_enabled
+from utils.checks import is_cog_enabled,dev
 import pandas as pd
 import seaborn as sns
 import pytz
 import matplotlib.pyplot as plt
 import datetime
 from utils.misc import convert_member, convert_int
+import timeago
 
 
 def aware(d):
@@ -57,7 +58,10 @@ def sum_dayly_barchart(df, n, x='datetime', y='len', fname='sum_dayly_barchart.p
 	grouped_df = df.groupby(pd.Grouper(key=x, freq=f'1D'))[y].agg('sum')
 	grouped_df = grouped_df.reset_index()
 	grouped_df['aux'] = grouped_df[x].apply(lambda d: d.strftime("%d %b"))
-	# plt.figure(figsize=(n / 3, 5))
+	inactive_days = grouped_df[grouped_df['len'] == 0]
+	low_activity_days = grouped_df[grouped_df['len'] < 30]
+	low_activity_days = low_activity_days[low_activity_days['len'] > 0]
+
 	sns.barplot(data=grouped_df, x='aux', y=y)
 	plt.xticks(rotation=90)
 
@@ -73,7 +77,7 @@ def sum_dayly_barchart(df, n, x='datetime', y='len', fname='sum_dayly_barchart.p
 	plt.xlabel('day')
 	plt.savefig(fname)
 	plt.clf()
-	return fname
+	return fname, inactive_days, low_activity_days
 
 
 def avg_weekly_hourly(df, n, x='datetime', y='len', fname="avg_weekly_hourly.png", m=None):
@@ -153,10 +157,10 @@ async def parse_args(args, ctx):
 	for a in args:
 		if member is None:
 			member = await convert_member(ctx, a)
-		if n is None:
+		elif n is None:
 			n = convert_int(a)
-		if level is None:
-			if a = in ['basic','mid','full']:
+		elif level is None:
+			if a in ['basic', 'mid', 'full']:
 				level = a
 	if n is None:
 		n = 30
@@ -164,13 +168,16 @@ async def parse_args(args, ctx):
 		query = {'member_id': member.id}
 	else:
 		query = {}
-	return member, n, query
+	if level is None:
+		level = 'mid'
+	return member, n, query, level
 
 
 class Analytics(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
+	@dev()
 	@commands.command()
 	async def gimme_csv(self, ctx, *args):
 		voice_data = await db.get(ctx.guild.id, 'analytics.voice', {}, list=True)
@@ -189,12 +196,19 @@ class Analytics(commands.Cog):
 	# 		except KeyError:
 	# 			print('shit')
 	# 	print('done')
+	@dev()
+	@commands.command()
+	async def howmany(self, ctx, r:discord.Role):
+		"""Returns how many members have the specified role"""
+		await ctx.send(f"There's {len(r.members)} members with the {r.name} role")
 
+	@dev()
 	@commands.command()
 	async def stats(self, ctx, *args):
-
-		member, n, query = await parse_args(args, ctx)
-
+		"""!stats <member=None> <n_days=30> <low/mid/full>"""
+		msg = await ctx.send('processing....')
+		member, n, query, level = await parse_args(args, ctx)
+		e = None
 		text_data = await db.get(ctx.guild.id, 'analytics.text', query, list=True)
 		voice_data = await db.get(ctx.guild.id, 'analytics.voice', query, list=True)
 
@@ -209,7 +223,13 @@ class Analytics(commands.Cog):
 
 		files = []
 
+		if member is not None:
+			e = discord.Embed()
+			e.title = f"Stats for {member.display_name} for the last {n} days"
+			e.add_field(name='Joined', value=timeago.format(member.joined_at, datetime.datetime.utcnow()))
+
 		i = 0
+		df_name = 'text'
 		for df in dfs:
 			df['len'] = df['len'].astype(int)
 			# df['datetime'] = df['datetime'].astype('datetime64[ns]')
@@ -217,17 +237,41 @@ class Analytics(commands.Cog):
 			df = df[df['datetime'] <= today]
 			df = df.append({'len': 0, 'datetime': first_day_in_graph}, ignore_index=True)
 			df = df.append({'len': 0, 'datetime': today}, ignore_index=True)
+			fname, inactive, low = sum_dayly_barchart(df, n, m=member, fname=str(i) + '.png')
 
-			files.append(sum_dayly_barchart(df, n, m=member,fname=str(i)+'.png'))
-			i+=1
-			files.append(avg_weekly_hourly(df, n, m=member,fname=str(i)+'.png'))
-			i += 1
-			files.append(avg_hourly(df, n, m=member,fname=str(i)+'.png'))
-			i += 1
+			if member is not None:
+				if df_name == 'text':
+					e.add_field(name="\u200b", value="\u200b", inline=False)
+					e.add_field(name=f"Text chars sent", value=f"{df['len'].sum()}")
+
+					e.add_field(name=
+								"Text Inactive days", value=f"{len(inactive)}/{n}")
+					e.add_field(name=
+								"Text low activity days", value=f"{len(low)}/{n}")
+					e.add_field(name ="\u200b",value="\u200b",inline=False)
+
+
+				else:
+					e.add_field(name=f"VC mins ", value=f"{df['len'].sum()}")
+					e.add_field(name=
+								"Voice Inactive days", value=f"{len(inactive)}/{n}")
+					e.add_field(name=
+								"Voice low activity days", value=f"{len(low)}/{n}")
+
+			if level in ['mid', 'full']:
+				files.append(fname)
+				i += 1
+			if level == 'full':
+				files.append(avg_weekly_hourly(df, n, m=member, fname=str(i) + '.png'))
+				i += 1
+				files.append(avg_hourly(df, n, m=member, fname=str(i) + '.png'))
+				i += 1
+			df_name = 'voice'
 
 		print('graphed')
 		files = [discord.File(x) for x in files]
-		await ctx.send(files=files)
+		await ctx.send("\u200b", embed=e, files=files)
+		await msg.delete()
 		plt.close('all')
 		print('sent')
 

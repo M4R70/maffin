@@ -19,8 +19,8 @@ async def insert_new_queue(ctx, server_id=None, channel_id=None):
 	if ctx is not None:
 		server_id = ctx.guild.id
 		channel_id = ctx.channel.id
-	new_queue = {'server_id': server_id, 'channel_id': channel_id, 'locked': True,
-				 'order': [], 'open': True}
+	new_queue = {'server_id': server_id, 'channel_id': channel_id, 'locked': False,
+				 'order': [], 'open': True, 'closed': False}
 	await db.update_queue(server_id, channel_id, new_queue)
 
 
@@ -300,6 +300,21 @@ class Queues(commands.Cog):
 			await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
 			await ctx.send(guy.display_name + ' was dragged to the queue!')
 
+	@dev()
+	@commands.command()
+	async def test_add(self, ctx, n: int):
+		"""test adds dummys to the queue"""
+		ok, queue = await is_queue_in_channel(ctx)
+		if not ok:
+			return
+		else:
+			for i in range(n):
+				queue['order'].append(f'dummy {i}')
+			await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
+			await ctx.send('Done')
+			qprint = [c for c in ctx.cog.get_commands() if c.name == 'qprint'][0]
+			await ctx.invoke(qprint)
+
 	@commands.command(aliases=["q"])
 	async def qprint(self, ctx):
 		"""Prints the current queue"""
@@ -307,25 +322,45 @@ class Queues(commands.Cog):
 		if not ok:
 			return
 		order = queue['order']
+
 		e = discord.Embed()
+		embeds = [e]
 		e.colour = discord.Colour.blue()
 		e.title = "Queue:"
 		i = 0
+		j = 0
 		for guyid in order:
-			guy = ctx.guild.get_member(int(guyid))
+			try:
+				guy = ctx.guild.get_member(int(guyid))
+			except ValueError:
+				guy = guyid
 			if guy:
-				if i == 0:
-					e.add_field(name=f"\u200b \u0009 Current turn: {guy.display_name}", value="\u200b", inline=False)
+				if i + j * 20 == 0:
+					embeds[j].add_field(name=f"\u200b \u0009 Current turn: {guy.display_name}", value="\u200b",
+										inline=False)
 				else:
-					e.add_field(name=f"\u200b \u0009 {i} \u200b \u0009 {guy.display_name}", value="\u200b",
-								inline=False)
+					try:
+						embeds[j].add_field(name=f"\u200b \u0009 {i + j * 20} \u200b \u0009 {guy.display_name}",
+											value="\u200b",
+											inline=False)
+					except AttributeError:
+						embeds[j].add_field(name=f"\u200b \u0009 {i + j * 20} \u200b \u0009 {guy}", value="\u200b",
+											inline=False)
 
 				i += 1
-		if queue['locked']:
-			e.set_footer(text="the queue is locked")
-		if queue['closed']:
-			e.set_footer(text="the queue is closed")
-		await ctx.send(embed=e)
+				if i > 20:
+					new_embed = discord.Embed()
+					new_embed.colour = discord.Colour.blue()
+					embeds.append(new_embed)
+					j += 1
+					i = 1
+
+		for em in embeds:
+			if queue['locked']:
+				em.set_footer(text="the queue is locked")
+			if queue['closed']:
+				em.set_footer(text="the queue is closed")
+			await ctx.send(embed=em)
 
 	async def cog_check(self, ctx):
 		res = await is_cog_enabled(ctx)

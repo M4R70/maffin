@@ -17,9 +17,9 @@ class Deployment(commands.Cog):
 
 		admin_commands = ['qcreate', 'qdelete']
 
-		commands = [x.name for x in ctx.cog.get_commands()]
+		cmds = [x.name for x in self.bot.cogs['Queues'].get_commands()]
 
-		for command in commands:
+		for command in cmds:
 			command = str(command).lower()
 			if command not in admin_commands:
 				if command not in current_perms.keys():
