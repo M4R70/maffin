@@ -8,6 +8,11 @@ import seaborn as sns
 import pytz
 import matplotlib.pyplot as plt
 import datetime
+from utils.misc import convert_member, convert_int
+
+
+def aware(d):
+	return d.tzinfo is not None and d.tzinfo.utcoffset(d) is not None
 
 
 def voice_state_diff(before, after):
@@ -22,29 +27,57 @@ def voice_state_diff(before, after):
 		return None
 
 
-def sum_dayly_barchart(df, n, x='datetime', y='len', fname='sum_dayly_barchart.png'):
-	first_day = max(df[x])
-	tresh = first_day - datetime.timedelta(days=n)
-	df = df[df[x] > tresh]
+def parse_voice_mins(raw_voice_df):
+	raw_voice_df['datetime'] = raw_voice_df['_id'].apply(
+		lambda x: x.generation_time.replace(tzinfo=pytz.timezone('UTC')))
+	raw_voice_df = raw_voice_df.copy()
+	per_user = raw_voice_df.groupby('member_id')
+	vc_mins_df = pd.DataFrame()
+	for label, user_df in per_user:
+		user_df = user_df.sort_values(by='datetime')
+		conn_row = None
+		for index, row in user_df.iterrows():
+			if conn_row is None and row['event'] == 'connected':
+				conn_row = row
+			elif conn_row is not None and row['event'] == 'disconnected':
+				delta = row['datetime'] - conn_row['datetime']
+				len = int(delta.total_seconds() / 60)
+				vc_mins_df = vc_mins_df.append(
+					{'member_id': row['member_id'], 'delta': delta, 'datetime': conn_row['datetime'],
+					 'len': len},
+					ignore_index=True)
+				# print(int(delta.total_seconds()/60))
+				conn_row = None
+
+	return vc_mins_df
+
+
+def sum_dayly_barchart(df, n, x='datetime', y='len', fname='sum_dayly_barchart.png', m=None):
+	df = df.copy()
 	grouped_df = df.groupby(pd.Grouper(key=x, freq=f'1D'))[y].agg('sum')
 	grouped_df = grouped_df.reset_index()
 	grouped_df['aux'] = grouped_df[x].apply(lambda d: d.strftime("%d %b"))
-	plt.figure(figsize=(n / 3, 5))
+	# plt.figure(figsize=(n / 3, 5))
 	sns.barplot(data=grouped_df, x='aux', y=y)
 	plt.xticks(rotation=90)
-	if y == 'len':
-		plt.title(f'Total Text Characters Sent Per Day (last {n} days) ')
-		plt.ylabel('Characters')
+
+	if 'delta' not in df.columns:
+		subject = "Text Characters Sent"
+		ylabel = 'Characters'
+	else:
+		subject = "Voice Chat Minutes"
+		ylabel = 'Minutes'
+	user = 'Member: ' + m.display_name if m is not None else "Whole Server"
+	plt.title(f'Total {subject} Per Day (last {n} days) \n For {user}')
+	plt.ylabel(f'{ylabel}')
 	plt.xlabel('day')
 	plt.savefig(fname)
 	plt.clf()
+	return fname
 
 
-def avg_weekly_hourly(df, n, x='datetime', y='len', fname="avg_weekly_hourly.png"):
+def avg_weekly_hourly(df, n, x='datetime', y='len', fname="avg_weekly_hourly.png", m=None):
 	df = df.copy()
-	first_day = max(df[x])
-	tresh = first_day - datetime.timedelta(days=n)
-	df = df[df[x] > tresh]
 	df['weekday'] = df[x].apply(lambda x: x.strftime("%A"))
 	df['hour'] = df[x].apply(lambda x: x.strftime("%H"))
 	grouped_df = df.groupby(['weekday', 'hour'])[y].mean()
@@ -54,20 +87,36 @@ def avg_weekly_hourly(df, n, x='datetime', y='len', fname="avg_weekly_hourly.png
 	i = 0
 	for weekday in set(grouped_df['weekday']):
 		w_df = grouped_df[grouped_df['weekday'] == weekday]
-		#sns.scatterplot(data=w_df, x='hour', y=y, label=weekday,linewidth=3,color=palette[i])
-		plt.plot(w_df['hour'],w_df[y],'o-',label=weekday)
-		i+=1
+
+		for j in range(25):
+			j = str(j).zfill(2)
+			if len(w_df[w_df['hour'] == j]) == 0:
+				w_df = w_df.append({'weekday': weekday, 'hour': j, y: 0}, ignore_index=True)
+		w_df['hour'] = w_df['hour'].astype(int)
+		w_df.sort_values(by=['hour'], inplace=True)
+
+		plt.plot(w_df['hour'], w_df[y], 'o-', label=weekday)
+		i += 1
+
 	plt.xticks(rotation=90)
 	plt.legend()
-	if y == 'len':
-		plt.title(f'Avg Text Characters Sent Per Hour (UTC timezone) (last {n} days)')
-		plt.ylabel('Avg Characters')
+	if 'delta' not in df.columns:
+		subject = "Text Characters Sent"
+		ylabel = 'Characters'
+	else:
+		subject = "Voice Chat Minutes"
+		ylabel = 'Minutes'
+
+	user = 'Member: ' + m.display_name if m is not None else "Whole Server"
+	plt.title(f'Avg {subject} Per Hour (UTC timezone) (last {n} days) \n For {user}')
+	plt.ylabel(ylabel)
 	plt.xlabel('Hour (UTC)')
 	plt.savefig(fname)
 	plt.clf()
+	return fname
 
 
-def avg_hourly(df, n, x='datetime', y='len', fname="avg_hourly.png"):
+def avg_hourly(df, n, x='datetime', y='len', fname="avg_hourly.png", m=None):
 	df = df.copy()
 	first_day = max(df[x])
 	tresh = first_day - datetime.timedelta(days=n)
@@ -76,14 +125,46 @@ def avg_hourly(df, n, x='datetime', y='len', fname="avg_hourly.png"):
 	grouped_df = df.groupby(['hour'])[y].mean()
 	grouped_df = grouped_df.reset_index()
 	plt.figure(figsize=(10, 5))
+	for j in range(25):
+		j = str(j).zfill(2)
+		if len(grouped_df[grouped_df['hour'] == j]) == 0:
+			grouped_df = grouped_df.append({'hour': j, y: 0}, ignore_index=True)
 	sns.barplot(data=grouped_df, x='hour', y=y)
 	plt.xticks(rotation=90)
-	if y == 'len':
-		plt.title(f'Avg Text Characters Sent Per Hour (UTC timezone) (last {n} days)')
-		plt.ylabel('Avg Characters')
+	if 'delta' not in df.columns:
+		subject = "Text Characters Sent"
+		ylabel = 'Characters'
+	else:
+		subject = "Voice Chat Minutes"
+		ylabel = 'Minutes'
+	user = 'Member: ' + m.display_name if m is not None else "Whole Server"
+	plt.title(f'Avg {subject} Per Hour (UTC timezone) (last {n} days)  \n For {user}')
+	plt.ylabel(ylabel)
 	plt.xlabel('Hour (UTC)')
 	plt.savefig(fname)
 	plt.clf()
+	return fname
+
+
+async def parse_args(args, ctx):
+	member = None
+	n = None
+	level = None
+	for a in args:
+		if member is None:
+			member = await convert_member(ctx, a)
+		if n is None:
+			n = convert_int(a)
+		if level is None:
+			if a = in ['basic','mid','full']:
+				level = a
+	if n is None:
+		n = 30
+	if member is not None:
+		query = {'member_id': member.id}
+	else:
+		query = {}
+	return member, n, query
 
 
 class Analytics(commands.Cog):
@@ -91,26 +172,63 @@ class Analytics(commands.Cog):
 		self.bot = bot
 
 	@commands.command()
-	async def insights(self, ctx, member: discord.Member = None, n: int = 30):
-		if member is not None:
-			query = {'author_id': member.id}
-		else:
-			query = {}
-		text_data = await db.get(ctx.guild.id, 'analytics.text', query, list=True)
-		print(f"len(text_data) = {len(text_data)}")
-		df = pd.DataFrame(text_data)
-		df['datetime'] = df['_id'].apply(lambda x: x.generation_time.replace(tzinfo=pytz.timezone('UTC')))
-		df['len'] = df['len'].astype(int)
-		df['datetime'] = df['datetime'].astype('datetime64[ns]')
+	async def gimme_csv(self, ctx, *args):
+		voice_data = await db.get(ctx.guild.id, 'analytics.voice', {}, list=True)
+		df = pd.DataFrame(voice_data)
+		df.to_csv('voice.csv')
 
-		sum_dayly_barchart(df, n)
-		avg_weekly_hourly(df, n)
-		avg_hourly(df, n)
+	# @commands.command()
+	# async def to_member(self, ctx, *args):
+	# 	all_data = await db.get(ctx.guild.id, 'analytics.text', {}, list=True)
+	# 	for d in all_data:
+	# 		try:
+	# 			d['member_id'] = d['author_id']
+	# 			del d['author_id']
+	# 			await db.update(ctx.guild.id, 'analytics.text', d)
+	# 			print('yes')
+	# 		except KeyError:
+	# 			print('shit')
+	# 	print('done')
+
+	@commands.command()
+	async def stats(self, ctx, *args):
+
+		member, n, query = await parse_args(args, ctx)
+
+		text_data = await db.get(ctx.guild.id, 'analytics.text', query, list=True)
+		voice_data = await db.get(ctx.guild.id, 'analytics.voice', query, list=True)
+
+		text_df = pd.DataFrame(text_data)
+		text_df['datetime'] = text_df['_id'].apply(lambda x: x.generation_time.replace(tzinfo=pytz.timezone('UTC')))
+		raw_voice_df = pd.DataFrame(voice_data)
+		voice_df = parse_voice_mins(raw_voice_df)
+		dfs = [text_df, voice_df]
+
+		today = datetime.datetime.utcnow().replace(tzinfo=pytz.timezone('UTC'))
+		first_day_in_graph = today - datetime.timedelta(days=n - 1)
+
+		files = []
+
+		i = 0
+		for df in dfs:
+			df['len'] = df['len'].astype(int)
+			# df['datetime'] = df['datetime'].astype('datetime64[ns]')
+			df = df[df['datetime'] > first_day_in_graph]
+			df = df[df['datetime'] <= today]
+			df = df.append({'len': 0, 'datetime': first_day_in_graph}, ignore_index=True)
+			df = df.append({'len': 0, 'datetime': today}, ignore_index=True)
+
+			files.append(sum_dayly_barchart(df, n, m=member,fname=str(i)+'.png'))
+			i+=1
+			files.append(avg_weekly_hourly(df, n, m=member,fname=str(i)+'.png'))
+			i += 1
+			files.append(avg_hourly(df, n, m=member,fname=str(i)+'.png'))
+			i += 1
+
 		print('graphed')
-		files = [discord.File(x + '.png') for x in ['sum_dayly_barchart', 'avg_weekly_hourly', 'avg_hourly']]
+		files = [discord.File(x) for x in files]
 		await ctx.send(files=files)
 		plt.close('all')
-
 		print('sent')
 
 	@commands.Cog.listener()
@@ -118,7 +236,7 @@ class Analytics(commands.Cog):
 		enabled = await is_cog_enabled(None, message.guild.id, 'analytics')
 		if enabled:
 			doc = {'message_id': message.id, 'channel_id': message.channel.id, 'len': len(message.content),
-				   'author_id': message.author.id}
+				   'member_id': message.author.id}
 			await db.insert(message.guild.id, 'analytics.text', doc)
 
 	@commands.Cog.listener()

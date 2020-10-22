@@ -49,6 +49,11 @@ async def insert(server_id, collection, doc):
 	await db[collection].insert_one(doc)
 
 
+async def update(server_id, collection, doc):
+	collection = f'{collection}.s{server_id}'
+	await db[collection].update_one({'_id': doc['_id']}, {"$set":doc}, upsert=True)
+
+
 async def get(server_id, collection, query, list=False):
 	collection = f'{collection}.s{server_id}'
 	res = db[collection].find(query)

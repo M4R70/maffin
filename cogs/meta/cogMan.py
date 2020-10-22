@@ -84,6 +84,7 @@ class cogMan(commands.Cog):
 		print(cogName)
 		importlib.reload(utils.db)
 		importlib.reload(utils.checks)
+		importlib.reload(utils.misc)
 		await ctx.invoke(self.unload_cog, cogName)
 		await ctx.invoke(self.load_cog, cogName)
 

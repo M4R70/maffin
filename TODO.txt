@@ -1,7 +1,4 @@
 Port Old Cogs
-
-    Match connect and disconnect vc session on disconnect/move might be easier
-
     Analytics
         Uses:
             individual activity:
