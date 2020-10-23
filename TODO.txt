@@ -11,10 +11,6 @@ Add features
         !inactive @role <ndays> <threshold>
         !host_candidates <ndays> <top x>
 
-    Settings
-        tailor made settings visualization with embeds, account for large embeds and useless data for the user
-        Defaults
-
     Logging
         !add_reason could be more user friendly (maybe react/prompt)
 
@@ -26,13 +22,23 @@ Add features
         event mode (mute people for the first 10 mins?)
         move people from one vc to another command
 
+    Usability:
+        review docstrings and ussage hints
+        review settings and deployment cogs, they kinda suck
+
+    Dev Ops:
+        Dockerize
+        Git Pull
+        DB Dump and size control
+
+--------------------------------------------------------------------------------------------------------- Test and deploy
+
     ReactionRoles:
         make a message a rr message manually
 
-    steal r danny's help formatter? make it better at least
 
 DevOps:
-    Dockerize
+
     Testing
     CI/CD
 

@@ -155,12 +155,15 @@ async def parse_args(args, ctx):
 	n = None
 	level = None
 	for a in args:
+		print(a)
 		if member is None:
 			member = await convert_member(ctx, a)
-		elif n is None:
+		if n is None:
 			n = convert_int(a)
-		elif level is None:
+		print('b')
+		if level is None:
 			if a in ['basic', 'mid', 'full']:
+				print('a')
 				level = a
 	if n is None:
 		n = 30
@@ -209,6 +212,7 @@ class Analytics(commands.Cog):
 		msg = await ctx.send('processing....')
 		member, n, query, level = await parse_args(args, ctx)
 		e = None
+		print(level)
 		text_data = await db.get(ctx.guild.id, 'analytics.text', query, list=True)
 		voice_data = await db.get(ctx.guild.id, 'analytics.voice', query, list=True)
 
