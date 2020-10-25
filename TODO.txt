@@ -1,11 +1,40 @@
 Add features
-    Logging:
-        Role perms modification
-        Create Role
 
-        Channel perms mod
-        Create Channel
-        Delete Channel
+
+
+
+
+
+    Dev Ops:
+        Dockerize
+        Git Pull
+        DB Dump and size control
+
+--------------------------------------------------------------------------------------------------------- Test and deploy
+
+    Stats:
+        Refactor for speed (tons of calculations being done multiple times, not good)
+        Something so that VC Mins are counted properly (rn if session longer than an hour, it missrepresents) (truncate hourly buckets to 60 min)
+        Rethink Visualizations, maybe more compact would be nicer
+        Embed for server wide, analyze server peak times and dead times?
+
+
+    ReactionRoles:
+        make a message a rr message manually
+
+
+    Logging:
+        search event by event in api and cover every fucking reported event
+            useful utilities
+                important_perms
+                make embed with moderator field
+                ez way to add perms to embed
+
+                add_channel to embed
+                add role to embed
+                add user to embed
+                add message to embed
+
 
     Analytics:
         !inactive @role <ndays> <threshold>
@@ -15,8 +44,8 @@ Add features
         !add_reason could be more user friendly (maybe react/prompt)
 
     Moderation:
-        server mute ask for reason,?
-        people get self unmuted when no reason is added?
+    server mute ask for reason,?
+    people get self unmuted when no reason is added?
 
     Events
         event mode (mute people for the first 10 mins?)
@@ -26,15 +55,6 @@ Add features
         review docstrings and ussage hints
         review settings and deployment cogs, they kinda suck
 
-    Dev Ops:
-        Dockerize
-        Git Pull
-        DB Dump and size control
-
---------------------------------------------------------------------------------------------------------- Test and deploy
-
-    ReactionRoles:
-        make a message a rr message manually
 
 
 DevOps:

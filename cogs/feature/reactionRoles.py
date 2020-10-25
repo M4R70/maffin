@@ -173,6 +173,7 @@ class ReactionRoles(commands.Cog):
 		await ctx.message.delete()
 
 
+
 	@commands.Cog.listener()
 	async def on_raw_reaction_add(self, payload):
 		guild, channel, message, user, emoji = await self.parse_payload(payload)

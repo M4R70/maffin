@@ -224,7 +224,6 @@ class Logging(commands.Cog):
 			if banner is not None:
 				entry.user = banner
 
-
 		e = member_embed(user, title="BAN", color=discord.Colour.red(), entry=entry)
 
 		e.add_field(name="Reason", value=entry.reason)
@@ -251,6 +250,111 @@ class Logging(commands.Cog):
 		await channel.send(embed=e)
 		if post_separate:
 			await channel.send(f"```{message.content}```")
+
+	@commands.Cog.listener()
+	async def on_guild_role_delete(self, role):
+		channel = await get_channel(role.guild, 'role_log_channel_id')
+		if channel is None:
+			return
+
+		entry = await search_entry(role.guild, role, discord.AuditLogAction.role_delete)
+		e = discord.Embed()
+		e.title = "Role Deleted"
+		e.colour = role.colour
+		e.add_field(name="Role", value=str(role))
+		if entry is not None:
+			e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
+		else:
+			e.add_field(name="Moderator", value="Failed to detect")
+
+		await channel.send(embed=e)
+
+	@commands.Cog.listener()
+	async def on_guild_role_create(self, role):
+		channel = await get_channel(role.guild, 'role_log_channel_id')
+		if channel is None:
+			return
+		important_perms = {'kick_members', 'ban_members', 'administrator', 'administrator', 'manage_guild',
+						   'manage_messages', 'mention_everyone', 'mute_members', 'deafen_members', 'move_members',
+						   'manage_nicknames', 'manage_roles', 'manage_webhooks', 'manage_emojis'}
+
+		important = [p[0] for p in role.permissions if p[1] and p[0] in important_perms]
+
+		entry = await search_entry(role.guild, role, discord.AuditLogAction.role_create)
+		e = discord.Embed()
+		e.title = "Role Created"
+		e.colour = role.colour
+		e.add_field(name="Role", value=str(role))
+		if entry is not None:
+			e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
+		else:
+			e.add_field(name="Moderator", value="Failed to detect")
+
+		e.add_field(name="Important Permissions", value=f"""{' || '.join(important)}""", inline=False)
+		await channel.send(embed=e)
+
+	@commands.Cog.listener()
+	async def on_guild_role_update(self, before, after):
+		channel = await get_channel(before.guild, 'role_log_channel_id')
+		if channel is None:
+			return
+
+		if before.permissions != after.permissions:
+			before_perms = {p[0] for p in before.permissions if p[1]}
+			after_perms = {p[0] for p in after.permissions if p[1]}
+			lost = []
+			gained = []
+			for perm in before_perms.union(after_perms):
+				if perm in before_perms and perm not in after_perms:
+					lost.append(perm)
+				elif perm not in before_perms and perm in after_perms:
+					gained.append(perm)
+
+			entry = await search_entry(before.guild, after, discord.AuditLogAction.role_update)
+			e = discord.Embed()
+			e.title = "Role Permissions Updated"
+			e.add_field(name="Role", value=str(after))
+			if entry is not None:
+				e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
+			else:
+				e.add_field(name="Moderator", value="Failed to detect")
+			if len(gained) > 0:
+				e.add_field(name="Permissions Gained", value=f"""{' || '.join(gained)}""", inline=False)
+			if len(lost) > 0:
+				e.add_field(name="Permissions Gained", value=f"""{' || '.join(lost)}""", inline=False)
+
+			e.colour = after.colour
+			await channel.send(embed=e)
+
+	@commands.Cog.listener()
+	async def on_guild_channel_create(self,new_channel):
+		channel = await get_channel(new_channel.guild, 'channel_log_channel_id')
+		if channel is None:
+			return
+		e = discord.Embed()
+		e.title = "Channel Created"
+		e.add_field(name="Channel", value=str(new_channel))
+		entry = await search_entry(new_channel.guild, new_channel, discord.AuditLogAction.channel_create)
+		if entry is not None:
+			e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
+		else:
+			e.add_field(name="Moderator", value="Failed to detect")
+		await channel.send(embed=e)
+
+	@commands.Cog.listener()
+	async def on_guild_channel_delete(self,del_channel):
+		channel = await get_channel(del_channel.guild, 'channel_log_channel_id')
+		if channel is None:
+			return
+		e = discord.Embed()
+		e.title = "Channel Deleted"
+		e.add_field(name="Channel", value=str(del_channel))
+		entry = await search_entry(del_channel.guild, del_channel, discord.AuditLogAction.channel_delete)
+		if entry is not None:
+			e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
+		else:
+			e.add_field(name="Moderator", value="Failed to detect")
+		await channel.send(embed=e)
 
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):

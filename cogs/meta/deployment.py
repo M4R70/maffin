@@ -39,7 +39,7 @@ class Deployment(commands.Cog):
 	@commands.command()
 	async def create_log_category(self, ctx):
 		"""sets up a category for the log channels"""
-		log_channels = ['ban', 'voice', 'role', 'mute', 'join', 'text']
+		log_channels = ['ban', 'voice', 'role', 'mute', 'join', 'text','channel']
 
 		try:
 			category = await ctx.guild.create_category_channel('Maffin Logs', position=0)
