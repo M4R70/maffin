@@ -1,13 +1,7 @@
 Add features
 
-
-
-
-
-
     Dev Ops:
         Dockerize
-        Git Pull
         DB Dump and size control
 
 --------------------------------------------------------------------------------------------------------- Test and deploy

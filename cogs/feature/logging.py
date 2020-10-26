@@ -18,33 +18,86 @@ async def get_channel(guild, channel_name):
 	return channel
 
 
-def member_embed(member, title="Insert a title you lazy dev!", color=discord.Colour.blue(), entry=None):
+def ow_to_str(x):
+
+	if x is True:
+		return "Allow"
+	if x is False:
+		return "Deny"
+	if x is None:
+		return "Neutral"
+
+
+def overwrite_diff(before, after, e):
+	before = dict(before)
+	after = dict(after)
+	before_keys = set(before.keys())
+	after_keys = set(after.keys())
+	new_keys = after_keys - before_keys
+	deleted_keys = before_keys - after_keys
+	if len(new_keys) > 0:
+		t = 'create'
+		for k in new_keys:
+			e.add_field(name='Overwrite Added', value=k, inline=False)
+			for perm in after[k]:
+				if perm[1] is not None:
+					e.add_field(name=perm[0], value=ow_to_str(perm[1]),inline=False)
+	elif len(deleted_keys) > 0:
+		t = 'delete'
+		for k in deleted_keys:
+			e.add_field(name='Overwrite Removed', value=k, inline=False)
+			for perm in before[k]:
+				if perm[1] is not None:
+					e.add_field(name=perm[0], value=ow_to_str(perm[1]),inline=False)
+	else:
+		t= 'update'
+		for k in after_keys | before_keys:
+			if before[k] != after[k]:
+				e.add_field(name='Overwrite Updated', value=k.name.replace('@',' '), inline=False)
+				for perm in before[k]:
+					to = dict(after[k])[perm[0]]
+					if perm[1] is not None and perm[1] != to:
+						e.add_field(name=perm[0], value=ow_to_str(perm[1]) + '->' + ow_to_str(to),inline=False)
+
+	return t
+
+
+def member_embed(member, title, color=discord.Colour.blue(), entry=None, mod=True):
 	e = discord.Embed()
 	e.colour = color
 	e.title = title
 	e.set_author(name=member.display_name, icon_url=member.avatar_url)
-	e.add_field(name="Account name", value=member.name, inline=True)
-	e.add_field(name="User id", value=member.id, inline=True)
-	if entry is not None:
-		try:
-			e.add_field(name="Moderator", value=f"{entry.user}", inline=False)
-		except:
-			e.add_field(name="Moderator", value="failed to obtain")
-
+	# e.add_field(name="User", value=member.name, inline=True)
+	e.add_field(name="User ID", value=member.id, inline=False)
+	# e.add_field(name="\u200b", value="\u200b", inline=False)
+	if mod:
+		add_mod(entry, e)
 	return e
+
+
+def add_mod(entry, e):
+	if entry is not None:
+		e.add_field(name="Moderator", value=f"{entry.user}")
+		e.add_field(name="Moderator ID", value=str(entry.user.id))
+	# e.add_field(name="\u200b", value="\u200b", inline=False)
+	else:
+		e.add_field(name="Moderator", value="failed to obtain", inline=False)
 
 
 async def search_entry(guild, target_user, action):
 	t = 1
 	entry = None
-	while entry == None:
+	while entry is None:
+		print('for')
 		async for e in guild.audit_logs(action=action, limit=10):
+			print(e.target)
+			print('---')
 			if e.target.id == target_user.id:
 				return e
 		await asyncio.sleep(t)
 		t += t
-		if t > 200:
-			return "fail"
+		if t > 60:
+			return None
 
 
 async def ask_for_reason(entry, message, user):
@@ -130,11 +183,7 @@ class Logging(commands.Cog):
 		possible_invites = await self.find_possible_invites(member.guild)
 		nothing = "** **"
 
-		e = discord.Embed()
-		e.colour = discord.Colour.teal()
-		e.title = f"{member}"
-		e.set_author(name="Member Joined", icon_url=member.avatar_url)
-		e.add_field(name="ID:", value=member.id)
+		e = member_embed(member, title="Joined", color=discord.Colour.teal(), mod=False)
 
 		if len(possible_invites) == 1:
 			e.add_field(name="Acount created", value=timeago.format(member.created_at, datetime.datetime.now()))
@@ -148,7 +197,6 @@ class Logging(commands.Cog):
 				e.add_field(name=nothing, value=i.url, inline=False)
 		else:
 			e.add_field(name="Invite could not be retrieved", value=nothing, inline=False)
-
 		try:
 			await channel.send(embed=e)
 		except discord.Forbidden:
@@ -173,15 +221,12 @@ class Logging(commands.Cog):
 		e.add_field(name="Jump Link", value=f"[here]({after.jump_url})")
 
 		try:
-
 			await channel.send(embed=e)
-
 			if post_separate:
 				await channel.send("Before:")
 				await channel.send(f"```{before.content}```")
 				await channel.send("After:")
 				await channel.send(f"```{after.content}```")
-
 		except discord.Forbidden:
 			await logging.warning("logs", f"Missing permission to post in {channel.name}")
 		except discord.errors.HTTPException:
@@ -193,11 +238,7 @@ class Logging(commands.Cog):
 		if channel is None:
 			return
 
-		e = discord.Embed()
-		e.colour = discord.Colour.dark_grey()
-		e.title = f"{member}"
-		e.set_author(name="Member Left", icon_url=member.avatar_url)
-		e.add_field(name="ID:", value=member.id)
+		e = member_embed(member, title="Left", color=discord.Colour.red(), mod=False)
 
 		await channel.send(embed=e)
 
@@ -239,14 +280,12 @@ class Logging(commands.Cog):
 			return
 		entry = await search_entry(message.guild, message.author, discord.AuditLogAction.message_delete)
 		e = member_embed(message.author, color=discord.Colour.red(), title="Message Deleted", entry=entry)
-
 		post_separate = False
 		if len(message.content) < 1000:
 			e.add_field(name="Message", value=f"{message.content}", inline=False)
 		else:
 			e.add_field(name="Message", value=f"Message too long, will be posted below this", inline=False)
 			post_separate = True
-
 		await channel.send(embed=e)
 		if post_separate:
 			await channel.send(f"```{message.content}```")
@@ -262,11 +301,7 @@ class Logging(commands.Cog):
 		e.title = "Role Deleted"
 		e.colour = role.colour
 		e.add_field(name="Role", value=str(role))
-		if entry is not None:
-			e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
-		else:
-			e.add_field(name="Moderator", value="Failed to detect")
-
+		add_mod(entry, e)
 		await channel.send(embed=e)
 
 	@commands.Cog.listener()
@@ -284,11 +319,8 @@ class Logging(commands.Cog):
 		e = discord.Embed()
 		e.title = "Role Created"
 		e.colour = role.colour
-		e.add_field(name="Role", value=str(role))
-		if entry is not None:
-			e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
-		else:
-			e.add_field(name="Moderator", value="Failed to detect")
+		e.add_field(name="Role", value=str(role), inline=False)
+		add_mod(entry, e)
 
 		e.add_field(name="Important Permissions", value=f"""{' || '.join(important)}""", inline=False)
 		await channel.send(embed=e)
@@ -313,11 +345,8 @@ class Logging(commands.Cog):
 			entry = await search_entry(before.guild, after, discord.AuditLogAction.role_update)
 			e = discord.Embed()
 			e.title = "Role Permissions Updated"
-			e.add_field(name="Role", value=str(after))
-			if entry is not None:
-				e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
-			else:
-				e.add_field(name="Moderator", value="Failed to detect")
+			e.add_field(name="Role", value=str(after), inline=False)
+			add_mod(entry, e)
 			if len(gained) > 0:
 				e.add_field(name="Permissions Gained", value=f"""{' || '.join(gained)}""", inline=False)
 			if len(lost) > 0:
@@ -326,65 +355,64 @@ class Logging(commands.Cog):
 			e.colour = after.colour
 			await channel.send(embed=e)
 
+
+
 	@commands.Cog.listener()
-	async def on_guild_channel_update(self,before,after):
+	async def on_guild_channel_update(self, before, after):
 		channel = await get_channel(after.guild, 'channel_log_channel_id')
 		if channel is None:
 			return
 
-		if before.permissions != after.permissions:
-			before_perms = {p[0] for p in before.permissions if p[1]}
-			after_perms = {p[0] for p in after.permissions if p[1]}
-			lost = []
-			gained = []
-			for perm in before_perms.union(after_perms):
-				if perm in before_perms and perm not in after_perms:
-					lost.append(perm)
-				elif perm not in before_perms and perm in after_perms:
-					gained.append(perm)
-
-			entry = await search_entry(before.guild, after, discord.AuditLogAction.role_update)
+		if before.overwrites != after.overwrites:
 			e = discord.Embed()
 			e.title = "Channel Permissions Updated"
-			e.add_field(name="Channel", value=str(after))
-			if entry is not None:
-				e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
-			else:
-				e.add_field(name="Moderator", value="Failed to detect")
-			if len(gained) > 0:
-				e.add_field(name="Permissions Gained", value=f"""{' || '.join(gained)}""", inline=False)
-			if len(lost) > 0:
-				e.add_field(name="Permissions Gained", value=f"""{' || '.join(lost)}""", inline=False)
+			e.add_field(name="Channel", value=str(after), inline=False)
+
+			t = overwrite_diff(before.overwrites, after.overwrites, e)
+			if t == "create":
+				action = discord.AuditLogAction.overwrite_create
+			elif t == "delete":
+				action = discord.AuditLogAction.overwrite_delete
+			elif t == "update":
+				action = discord.AuditLogAction.overwrite_update
+			entry = await search_entry(after.guild,after,action)
+			add_mod(entry, e)
 			await channel.send(embed=e)
 
+		if before.name != after.name:
+			e = discord.Embed()
+			e.title = "Channel Renamed"
+			e.add_field(name="Old Name", value=str(before),inline=False)
+			e.add_field(name="New Name", value=str(after), inline=False)
+			entry = await search_entry(after.guild,after,discord.AuditLogAction.channel_update)
+			add_mod(entry, e)
+			await channel.send(embed=e)
+
+
+
+
 	@commands.Cog.listener()
-	async def on_guild_channel_create(self,new_channel):
+	async def on_guild_channel_create(self, new_channel):
 		channel = await get_channel(new_channel.guild, 'channel_log_channel_id')
 		if channel is None:
 			return
 		e = discord.Embed()
 		e.title = "Channel Created"
-		e.add_field(name="Channel", value=str(new_channel))
+		e.add_field(name="Channel", value=str(new_channel),inline=False)
 		entry = await search_entry(new_channel.guild, new_channel, discord.AuditLogAction.channel_create)
-		if entry is not None:
-			e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
-		else:
-			e.add_field(name="Moderator", value="Failed to detect")
+		add_mod(entry, e)
 		await channel.send(embed=e)
 
 	@commands.Cog.listener()
-	async def on_guild_channel_delete(self,del_channel):
+	async def on_guild_channel_delete(self, del_channel):
 		channel = await get_channel(del_channel.guild, 'channel_log_channel_id')
 		if channel is None:
 			return
 		e = discord.Embed()
 		e.title = "Channel Deleted"
-		e.add_field(name="Channel", value=str(del_channel))
+		e.add_field(name="Channel", value=str(del_channel),inline=False)
 		entry = await search_entry(del_channel.guild, del_channel, discord.AuditLogAction.channel_delete)
-		if entry is not None:
-			e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
-		else:
-			e.add_field(name="Moderator", value="Failed to detect")
+		add_mod(entry, e)
 		await channel.send(embed=e)
 
 	@commands.Cog.listener()
@@ -410,7 +438,7 @@ class Logging(commands.Cog):
 	@commands.Cog.listener()
 	async def on_member_update(self, before, after):
 
-		e = member_embed(after, color=discord.Colour.purple())
+		e = member_embed(after, color=discord.Colour.purple(), title='asd')
 		if before.roles != after.roles:
 			channel = await get_channel(before.guild, 'role_log_channel_id')
 			if channel is None:
