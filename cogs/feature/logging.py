@@ -327,6 +327,37 @@ class Logging(commands.Cog):
 			await channel.send(embed=e)
 
 	@commands.Cog.listener()
+	async def on_guild_channel_update(self,before,after):
+		channel = await get_channel(after.guild, 'channel_log_channel_id')
+		if channel is None:
+			return
+
+		if before.permissions != after.permissions:
+			before_perms = {p[0] for p in before.permissions if p[1]}
+			after_perms = {p[0] for p in after.permissions if p[1]}
+			lost = []
+			gained = []
+			for perm in before_perms.union(after_perms):
+				if perm in before_perms and perm not in after_perms:
+					lost.append(perm)
+				elif perm not in before_perms and perm in after_perms:
+					gained.append(perm)
+
+			entry = await search_entry(before.guild, after, discord.AuditLogAction.role_update)
+			e = discord.Embed()
+			e.title = "Channel Permissions Updated"
+			e.add_field(name="Channel", value=str(after))
+			if entry is not None:
+				e.add_field(name="Moderator", value=str(entry.user) + ' ' + str(entry.user.id))
+			else:
+				e.add_field(name="Moderator", value="Failed to detect")
+			if len(gained) > 0:
+				e.add_field(name="Permissions Gained", value=f"""{' || '.join(gained)}""", inline=False)
+			if len(lost) > 0:
+				e.add_field(name="Permissions Gained", value=f"""{' || '.join(lost)}""", inline=False)
+			await channel.send(embed=e)
+
+	@commands.Cog.listener()
 	async def on_guild_channel_create(self,new_channel):
 		channel = await get_channel(new_channel.guild, 'channel_log_channel_id')
 		if channel is None:
