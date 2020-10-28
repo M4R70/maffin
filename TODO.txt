@@ -1,8 +1,16 @@
 Add features
+    HereRoles
+        cooldown on same channel pings
+
+    Analytics
+        Empty db crashes te command
 
     Dev Ops:
-        Dockerize
-        DB Dump and size control
+        DB settings dump and size control
+
+    Usability:
+        review docstrings and ussage hints
+        review settings and deployment cogs, they kinda suck
 
 --------------------------------------------------------------------------------------------------------- Test and deploy
 
@@ -12,42 +20,30 @@ Add features
         Rethink Visualizations, maybe more compact would be nicer
         Embed for server wide, analyze server peak times and dead times?
 
+        !inactive @role <ndays> <threshold>
+        !host_candidates <ndays> <top x>
+
 
     ReactionRoles:
         make a message a rr message manually
 
 
     Logging:
-        search event by event in api and cover every fucking reported event
-            useful utilities
-                important_perms
-                make embed with moderator field
-                ez way to add perms to embed
 
-                add_channel to embed
-                add role to embed
-                add user to embed
-                add message to embed
-
-
-    Analytics:
-        !inactive @role <ndays> <threshold>
-        !host_candidates <ndays> <top x>
-
-    Logging
         !add_reason could be more user friendly (maybe react/prompt)
 
+        search event by event in api and cover every fucking reported event
+            think more stuff to log (check api)
+
+
     Moderation:
-    server mute ask for reason,?
-    people get self unmuted when no reason is added?
+        server mute ask for reason,?
+        people get self unmuted when no reason is added?
 
     Events
         event mode (mute people for the first 10 mins?)
         move people from one vc to another command
 
-    Usability:
-        review docstrings and ussage hints
-        review settings and deployment cogs, they kinda suck
 
 
 
