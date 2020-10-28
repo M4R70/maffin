@@ -1,11 +1,15 @@
 from discord.ext import commands
 import json
 import os
+import discord
 import logging
 import traceback
 import utils.db
 
 default_prefix = '!'
+intents = discord.Intents.default()
+intents.members = True
+
 
 with open('creds.json', 'r') as f:
 	creds = json.load(f)
@@ -52,7 +56,7 @@ async def get_pre(bot, message):
 
 
 bot = commands.AutoShardedBot(command_prefix=get_pre, formatter=None, description=None, pm_help=False,
-							  max_messages=50000)
+							  max_messages=50000,intents=intents)
 logging.basicConfig(level=logging.INFO)
 
 load_all_cogs()
