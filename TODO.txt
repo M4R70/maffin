@@ -1,9 +1,8 @@
 Add features
-    HereRoles
-        cooldown on same channel pings
 
     Analytics
-        Empty db crashes te command
+        Something so that VC Mins are counted properly (rn if session longer than an hour, it missrepresents) (truncate hourly buckets to 60 min)
+
 
     Dev Ops:
         DB settings dump and size control
@@ -15,8 +14,6 @@ Add features
 --------------------------------------------------------------------------------------------------------- Test and deploy
 
     Stats:
-        Refactor for speed (tons of calculations being done multiple times, not good)
-        Something so that VC Mins are counted properly (rn if session longer than an hour, it missrepresents) (truncate hourly buckets to 60 min)
         Rethink Visualizations, maybe more compact would be nicer
         Embed for server wide, analyze server peak times and dead times?
 

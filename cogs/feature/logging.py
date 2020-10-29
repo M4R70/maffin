@@ -88,10 +88,7 @@ async def search_entry(guild, target_user, action):
 	t = 1
 	entry = None
 	while entry is None:
-		print('for')
 		async for e in guild.audit_logs(action=action, limit=10):
-			print(e.target)
-			print('---')
 			if e.target.id == target_user.id:
 				return e
 		await asyncio.sleep(t)
@@ -282,7 +279,7 @@ class Logging(commands.Cog):
 		e = member_embed(message.author, color=discord.Colour.red(), title="Message Deleted", entry=entry)
 		post_separate = False
 		if len(message.content) < 1000:
-			e.add_field(name="Message", value=f"{message.content}", inline=False)
+			e.add_field(name="Message", value=f"{message.content}" + "\u200b", inline=False)
 		else:
 			e.add_field(name="Message", value=f"Message too long, will be posted below this", inline=False)
 			post_separate = True
