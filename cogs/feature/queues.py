@@ -40,9 +40,58 @@ async def get_linked_queue(vc):
 	return None, None
 
 
+async def make_queue_embeds(ctx, queue):
+	e = discord.Embed()
+	embeds = [e]
+	e.colour = discord.Colour.blue()
+	e.title = "Queue:"
+	i = 0
+	j = 0
+	for guyid in queue['order']:
+		try:
+			guy = ctx.guild.get_member(int(guyid))
+		except ValueError:
+			guy = guyid
+		if guy:
+			try:
+				if i + j * 20 == 0:
+					embeds[j].add_field(name=f"\u200b \u0009 Current turn: {guy.display_name}", value="\u200b",
+										inline=False)
+				else:
+					embeds[j].add_field(name=f"\u200b \u0009 {i + j * 20} \u200b \u0009 {guy.display_name}",
+										value="\u200b",
+										inline=False)
+			except AttributeError:
+				embeds[j].add_field(name=f"\u200b \u0009 {i + j * 20} \u200b \u0009 {guy}", value="\u200b",
+									inline=False)
+
+			i += 1
+			if i > 20:
+				new_embed = discord.Embed()
+				new_embed.colour = discord.Colour.blue()
+				embeds.append(new_embed)
+				j += 1
+				i = 1
+	pop = False
+	for em in embeds:
+		if queue['locked']:
+			em.set_footer(text="the queue is locked")
+		if queue['closed']:
+			em.set_footer(text="the queue is closed")
+		if len(em.fields) == 0:
+			pop = True
+	if pop and len(embeds) > 1:
+		embeds.pop()
+	return embeds
+
+
+
+
+
 class Queues(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
+		self.updating = False
 
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
@@ -66,6 +115,42 @@ class Queues(commands.Cog):
 		source_queue['channel_id'] = ctx.channel.id
 		await db.update_queue(ctx.guild.id, ctx.channel.id, source_queue)
 		await ctx.send(f"Copied queue from {source_channel} to {ctx.channel}")
+
+	async def display_queue_update(self, ctx, queue):
+		active = queue.get('event')
+		if active in [None, False]:
+			return
+		if self.updating:
+			return
+		self.updating = True
+		display_channel = ctx.guild.get_channel(queue['event']['display_channel'])
+		embeds_to_publish = await make_queue_embeds(ctx, queue)
+		old_messages_ids = queue['event']['display_messages'][:len(embeds_to_publish)]
+		to_delete = queue['event']['display_messages'][len(embeds_to_publish):]
+
+		for id in old_messages_ids:
+			try:
+				old_message = await display_channel.fetch_message(id)
+				e = embeds_to_publish.pop(0)
+				await old_message.edit(embed=e)
+			except (discord.errors.NotFound, IndexError) as e:
+				print(e)
+				queue['event']['display_messages'].remove(id)
+
+		for e in embeds_to_publish:
+			msg = await display_channel.send(embed=e)
+			queue['event']['display_messages'].append(msg.id)
+
+		for id in to_delete:
+			try:
+				msg = await display_channel.fetch_message(id)
+				await msg.delete()
+				queue['event']['display_messages'].remove(id)
+			except discord.errors.NotFound:
+				pass
+
+		await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
+		self.updating = False
 
 	@is_allowed_in_config()
 	@commands.command()
@@ -147,6 +232,27 @@ class Queues(commands.Cog):
 		await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
 		await ctx.send("Queue Locked")
 
+	@dev()
+	@commands.command()
+	# @is_allowed_in_config()
+	async def event_display(self, ctx, display_channel: discord.TextChannel = None):
+		"""Enable/Disable Event Mode"""
+		ok, queue = await is_queue_in_channel(ctx)
+		if not ok:
+			return
+
+		e = queue.get('event', {'active': False})
+		if e['active'] is False and display_channel is not None:
+			e['active'] = True
+			e['display_channel'] = display_channel.id
+			await ctx.send(f'Queue will be displayed on {display_channel}')
+			e['display_messages'] = []
+			await self.display_queue_update(ctx,queue)
+		else:
+			await ctx.send(f'Event display disabled')
+		queue['event'] = e
+		await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
+
 	@commands.command()
 	@is_allowed_in_config()
 	async def qunlock(self, ctx):
@@ -200,6 +306,8 @@ class Queues(commands.Cog):
 		else:
 			await ctx.send("Sorry, the queue you are trying to join is closed :(")
 
+		await self.display_queue_update(ctx, queue)
+
 	@commands.command(aliases=['ql'])
 	async def qleave(self, ctx):
 		"""Removes you from the queue """
@@ -212,6 +320,8 @@ class Queues(commands.Cog):
 			await ctx.send(ctx.author.mention + ' left the queue :(')
 		else:
 			await ctx.send("You are not in the queue!")
+		print(queue)
+		await self.display_queue_update(ctx, queue)
 
 	@is_allowed_in_config()
 	@commands.command()
@@ -226,6 +336,8 @@ class Queues(commands.Cog):
 			await ctx.send(guy.display_name + ' was shooed away from the queue :(')
 		else:
 			await ctx.send(guy.display_name + ' is not in the queue >:v')
+
+		await self.display_queue_update(ctx, queue)
 
 	@commands.command()
 	async def qn(self, ctx):
@@ -286,6 +398,8 @@ class Queues(commands.Cog):
 		else:
 			await ctx.send('You are not authorized to do this')
 
+		await self.display_queue_update(ctx, queue)
+
 	@is_allowed_in_config()
 	@commands.command()
 	async def drag(self, ctx, *, guy: discord.Member):
@@ -299,6 +413,8 @@ class Queues(commands.Cog):
 			queue['order'].append(guy.id)
 			await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
 			await ctx.send(guy.display_name + ' was dragged to the queue!')
+
+		await self.display_queue_update(ctx, queue)
 
 	@dev()
 	@commands.command()
@@ -315,52 +431,23 @@ class Queues(commands.Cog):
 			qprint = [c for c in ctx.cog.get_commands() if c.name == 'qprint'][0]
 			await ctx.invoke(qprint)
 
+		await self.display_queue_update(ctx, queue)
+
 	@commands.command(aliases=["q"])
 	async def qprint(self, ctx):
 		"""Prints the current queue"""
 		ok, queue = await is_queue_in_channel(ctx)
 		if not ok:
 			return
-		order = queue['order']
 
-		e = discord.Embed()
-		embeds = [e]
-		e.colour = discord.Colour.blue()
-		e.title = "Queue:"
-		i = 0
-		j = 0
-		for guyid in order:
-			try:
-				guy = ctx.guild.get_member(int(guyid))
-			except ValueError:
-				guy = guyid
-			if guy:
-				if i + j * 20 == 0:
-					embeds[j].add_field(name=f"\u200b \u0009 Current turn: {guy.display_name}", value="\u200b",
-										inline=False)
-				else:
-					try:
-						embeds[j].add_field(name=f"\u200b \u0009 {i + j * 20} \u200b \u0009 {guy.display_name}",
-											value="\u200b",
-											inline=False)
-					except AttributeError:
-						embeds[j].add_field(name=f"\u200b \u0009 {i + j * 20} \u200b \u0009 {guy}", value="\u200b",
-											inline=False)
-
-				i += 1
-				if i > 20:
-					new_embed = discord.Embed()
-					new_embed.colour = discord.Colour.blue()
-					embeds.append(new_embed)
-					j += 1
-					i = 1
+		if queue.get('event',{'active':False})['active']:
+			await self.display_queue_update(ctx, queue)
+			return
+		embeds = await make_queue_embeds(ctx, queue)
 
 		for em in embeds:
-			if queue['locked']:
-				em.set_footer(text="the queue is locked")
-			if queue['closed']:
-				em.set_footer(text="the queue is closed")
 			await ctx.send(embed=em)
+		await self.display_queue_update(ctx, queue)
 
 	async def cog_check(self, ctx):
 		res = await is_cog_enabled(ctx)
