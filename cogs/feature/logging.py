@@ -182,7 +182,7 @@ class Logging(commands.Cog):
 
 		e = member_embed(member, title="Joined", color=discord.Colour.teal(), mod=False)
 
-		if possible invites is None:
+		if possible_invites is None:
 			e.add_field(name="Invite could not be retrieved", value=nothing, inline=False)
 		
 		elif len(possible_invites) == 1:
