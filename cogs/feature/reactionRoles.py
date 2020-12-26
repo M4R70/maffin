@@ -197,6 +197,7 @@ class ReactionRoles(commands.Cog):
 					if role_id in user_roles_ids:
 						r = guild.get_role(role_id)
 						await user.remove_roles(r)
+						break
 		await user.add_roles(role)
 		
 
