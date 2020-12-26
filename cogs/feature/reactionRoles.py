@@ -189,13 +189,14 @@ class ReactionRoles(commands.Cog):
 		except KeyError:
 			return
 		role = guild.get_role(role_id)
+		await message.remove_reaction(emoji,user)
 		if db_info['exclusive']:
 			for r_emoji, role_id in db_info['used_emojis'].items():
 				if r_emoji != emoji:
 					r = guild.get_role(role_id)
 					await user.remove_roles(r)
 		await user.add_roles(role)
-		await message.remove_reaction(emoji,user)
+		
 
 
 	async def parse_payload(self, payload):
