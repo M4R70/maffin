@@ -363,10 +363,10 @@ class Queues(commands.Cog):
 		if not queue['locked'] or host:
 			if len(queue['order']) > 1:
 				passed = queue['order'].pop(0)
-				now_id = queue['order'].pop(0)
+				now_id = queue['order'][0]
 				now = ctx.guild.get_member(now_id)
 				while now is None and len(queue['order']) > 0:
-					now_id = queue['order'].pop(0)
+					now_id = queue['order'][0]
 					now = ctx.guild.get_member(now_id)
 				await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
 				try:
@@ -376,7 +376,7 @@ class Queues(commands.Cog):
 				except:
 					pass
 				if len(queue['order']) > 1:
-					after = ctx.guild.get_member(queue['order'][0])
+					after = ctx.guild.get_member(queue['order'][1])
 					if now is None:
 						await ctx.send(f"Queue is empty")
 					elif after is None:
