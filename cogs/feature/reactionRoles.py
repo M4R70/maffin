@@ -190,11 +190,13 @@ class ReactionRoles(commands.Cog):
 			return
 		role = guild.get_role(role_id)
 		await message.remove_reaction(emoji,user)
+		user_roles_ids = [r.id for r in user.roles]
 		if db_info['exclusive']:
 			for r_emoji, role_id in db_info['used_emojis'].items():
 				if r_emoji != emoji:
-					r = guild.get_role(role_id)
-					await user.remove_roles(r)
+					if role_id in user_roles_ids:
+						r = guild.get_role(role_id)
+						await user.remove_roles(r)
 		await user.add_roles(role)
 		
 
