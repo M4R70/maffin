@@ -182,7 +182,10 @@ class Logging(commands.Cog):
 
 		e = member_embed(member, title="Joined", color=discord.Colour.teal(), mod=False)
 
-		if len(possible_invites) == 1:
+		if possible invites is None:
+			e.add_field(name="Invite could not be retrieved", value=nothing, inline=False)
+		
+		elif len(possible_invites) == 1:
 			e.add_field(name="Acount created", value=timeago.format(member.created_at, datetime.datetime.now()))
 			e.add_field(name="Invite used", value=possible_invites[0].url, inline=False)
 			e.add_field(name="Invite created by", value=str(possible_invites[0].inviter), inline=True)
@@ -193,7 +196,8 @@ class Logging(commands.Cog):
 			for i in possible_invites:
 				e.add_field(name=nothing, value=i.url, inline=False)
 		else:
-			e.add_field(name="Invite could not be retrieved", value=nothing, inline=False)
+			return
+
 		try:
 			await channel.send(embed=e)
 		except discord.Forbidden:
