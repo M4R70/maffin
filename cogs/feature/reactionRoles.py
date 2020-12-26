@@ -106,9 +106,9 @@ class ReactionRoles(commands.Cog):
 					await channel.fetch_message(int(msg_id))
 				except discord.errors.NotFound:
 					to_unset.append(msg_id)
-
-			unset = {x:1 for x in to_unset}
-			await db.update_setting(ctx.guild.id, 'reactionRoles', {"$unset": unset})
+			if len(to_unset) > 0:
+				unset = {x:1 for x in to_unset}
+				await db.update_setting(ctx.guild.id, 'reactionRoles', {"$unset": unset})
 
 		first = True
 		bot_user = ctx.guild.get_member(self.bot.user.id)
