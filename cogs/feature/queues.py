@@ -376,7 +376,7 @@ class Queues(commands.Cog):
 				except:
 					pass
 				if len(queue['order']) > 1:
-					after = ctx.guild.get_member(queue['order'][1])
+					after = ctx.guild.get_member(queue['order'][0])
 					if now is None:
 						await ctx.send(f"Queue is empty")
 					elif after is None:
