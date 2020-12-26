@@ -427,8 +427,7 @@ class Logging(commands.Cog):
 			await log_server_mute(diff, member)
 			return
 		else:
-			e = member_embed(member)
-			e.title = diff
+			e = member_embed(member,diff)
 
 		await channel.send(embed=e)
 
