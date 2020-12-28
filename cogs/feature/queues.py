@@ -366,6 +366,7 @@ class Queues(commands.Cog):
 				now_id = queue['order'][0]
 				now = ctx.guild.get_member(now_id)
 				while now is None and len(queue['order']) > 0:
+					queue['order'].pop(0)
 					now_id = queue['order'][0]
 					now = ctx.guild.get_member(now_id)
 				await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
