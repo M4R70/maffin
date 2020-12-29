@@ -357,6 +357,7 @@ class Queues(commands.Cog):
 			for user in linked_vc.members:
 				is_h = await is_host(ctx.guild.id, user)
 				if is_h:
+					print(user)
 					host_in_vc = True
 					break
 		print(f"host_in_vc {host_in_vc}")
