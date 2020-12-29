@@ -350,6 +350,7 @@ class Queues(commands.Cog):
 		host_in_vc = True
 		linked_vc = None
 		if 'linked_vc_id' in queue:
+			print('hola')
 			linked_vc = ctx.guild.get_channel(int(queue['linked_vc_id']))
 			if linked_vc is not None:
 				print(linked_vc)
