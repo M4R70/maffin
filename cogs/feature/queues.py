@@ -352,11 +352,12 @@ class Queues(commands.Cog):
 		if 'linked_vc_id' in queue:
 			linked_vc = ctx.guild.get_channel(int(queue['linked_vc_id']))
 			if linked_vc is not None:
+				print(linked_vc)
 				host_in_vc = False
 				for user in linked_vc.members:
 					if is_host(ctx.guild.id, user):
 						host_in_vc = True
-
+		print(host_in_vc)
 		if not host_in_vc and queue['locked']:
 			await ctx.send("There is no host in vc, auto unlocking queue ...")
 			queue['locked'] = False
