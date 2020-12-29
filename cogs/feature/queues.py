@@ -300,7 +300,6 @@ class Queues(commands.Cog):
 				await ctx.send("You're already in the queue >:v")
 			else:
 				queue['order'].append(ctx.author.id)
-				print(queue)
 				await db.update_queue(ctx.guild.id, ctx.channel.id, queue)
 				await ctx.send(ctx.author.mention + ' joined the queue!')
 		else:
@@ -320,7 +319,6 @@ class Queues(commands.Cog):
 			await ctx.send(ctx.author.mention + ' left the queue :(')
 		else:
 			await ctx.send("You are not in the queue!")
-		print(queue)
 		await self.display_queue_update(ctx, queue)
 
 	@is_allowed_in_config()
@@ -350,17 +348,13 @@ class Queues(commands.Cog):
 		host_in_vc = True
 		linked_vc_id = int(queue.get('linked_vc_id','0'))
 		linked_vc = ctx.guild.get_channel(linked_vc_id)
-		print(f" id {linked_vc_id}")
 		if linked_vc is not None:
-			print(f"channel {linked_vc}")
 			host_in_vc = False
 			for user in linked_vc.members:
 				is_h = await is_host(ctx.guild.id, user)
 				if is_h:
-					print(user)
 					host_in_vc = True
 					break
-		print(f"host_in_vc {host_in_vc}")
 		if not host_in_vc and queue['locked']:
 			await ctx.send("There is no host in vc, auto unlocking queue ...")
 			queue['locked'] = False
