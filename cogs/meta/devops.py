@@ -4,7 +4,7 @@ import discord
 import random
 import os
 from utils.checks import is_host, is_cog_enabled, is_allowed_in_config, dev
-
+import sys
 
 class DevOps(commands.Cog):
 	def __init__(self, bot):
