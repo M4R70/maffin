@@ -15,7 +15,13 @@ class DevOps(commands.Cog):
 	async def git_pull(self, ctx):
 		os.system("git pull")
 		await ctx.send('Done')
-
+	@dev()
+	@commands.command()
+	async def mem_check(self, ctx):
+		res = ":) \n"
+		for cog_name,cog in bot.cogs.items():
+			res += cog_name + " " + sys.getsizeof(cog) + '\n'
+		await ctx.send(res)
 
 def setup(bot):
 	bot.add_cog(DevOps(bot))
