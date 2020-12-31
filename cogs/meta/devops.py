@@ -20,7 +20,7 @@ class DevOps(commands.Cog):
 	async def mem_check(self, ctx):
 		res = ":) \n"
 		for cog_name,cog in self.bot.cogs.items():
-			res += cog_name + " " + sys.getsizeof(cog) + '\n'
+			res += cog_name + " " + str(sys.getsizeof(cog)) + '\n'
 		await ctx.send(res)
 
 def setup(bot):
