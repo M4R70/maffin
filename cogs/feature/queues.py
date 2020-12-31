@@ -433,6 +433,28 @@ class Queues(commands.Cog):
 			await ctx.invoke(qprint)
 
 		await self.display_queue_update(ctx, queue)
+		
+
+	
+	@dev()
+	@commands.command()
+	async def print_queue_links(self, ctx):
+		all_queues = await db.get_setting(vc.guild.id, 'existing_queues')
+		try:
+			del all_queues['_id']
+			del all_queues['field_name']
+		except KeyError:
+			pass
+		
+		res = ":) \n"
+		for queue in all_queues.values():
+			text_channel = ctx.guild.get_channel(int(queue['channel_id']))
+			voice_channel = ctx.guild.get_channel(int(queue['linked_vc_id']))
+			if voice_channel is not None and text_channel is not None:
+				res+= str(text_channel) + ' ' + str(voice_channel) + '\n'
+			
+		await ctx.send(res)
+	
 
 	@commands.command(aliases=["q"])
 	async def qprint(self, ctx):
