@@ -439,7 +439,7 @@ class Queues(commands.Cog):
 	@dev()
 	@commands.command()
 	async def print_queue_links(self, ctx):
-		all_queues = await db.get_setting(vc.guild.id, 'existing_queues')
+		all_queues = await db.get_setting(ctx.guild.id, 'existing_queues')
 		try:
 			del all_queues['_id']
 			del all_queues['field_name']
