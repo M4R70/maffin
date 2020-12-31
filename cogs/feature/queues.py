@@ -448,8 +448,8 @@ class Queues(commands.Cog):
 		
 		res = ":) \n"
 		for queue in all_queues.values():
-			text_channel = ctx.guild.get_channel(int(queue['channel_id']))
-			voice_channel = ctx.guild.get_channel(int(queue['linked_vc_id']))
+			text_channel = ctx.guild.get_channel(int(queue.get('channel_id',0)))
+			voice_channel = ctx.guild.get_channel(int(queue.get('linked_vc_id',0)))
 			if voice_channel is not None and text_channel is not None:
 				res+= str(text_channel) + ' ' + str(voice_channel) + '\n'
 			
