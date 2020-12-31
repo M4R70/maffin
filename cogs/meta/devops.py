@@ -5,6 +5,7 @@ import random
 import os
 from utils.checks import is_host, is_cog_enabled, is_allowed_in_config, dev
 import sys
+import pickle
 
 def sizeof(obj):
     size = sys.getsizeof(obj)
@@ -26,7 +27,8 @@ class DevOps(commands.Cog):
 	async def mem_check(self, ctx):
 		res = ":) \n"
 		for cog_name,cog in self.bot.cogs.items():
-			res += cog_name + " " + str(sizeof(cog)) + '\n'
+			size_estimate = len(pickle.dumps(cog))
+			res += cog_name + " " + str(size_estimate) + '\n'
 		await ctx.send(res)
 
 
