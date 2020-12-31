@@ -98,14 +98,13 @@ class Queues(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):
-		if before.channel != after.channel:
-			if after.channel is None and before.channel is not None:
-				if len(before.channel.members) == 0:
-					queue, text_channel = await get_linked_queue(before.channel)
-					if text_channel is not None:
-						if len(queue['order']) > 0:
-							await insert_new_queue(None, channel_id=text_channel.id, server_id=member.guild.id,linked_vc_id=queue.get('linked_vc_id',0))
-							await text_channel.send("Voice channel is empty, resetting queue...")
+		
+		if before.channel is not None and len(before.channel.members) == 0:
+			queue, text_channel = await get_linked_queue(before.channel)
+			if text_channel is not None:
+				if len(queue['order']) > 0:
+					await insert_new_queue(None, channel_id=text_channel.id, server_id=member.guild.id,linked_vc_id=queue.get('linked_vc_id',0))
+					await text_channel.send("Voice channel is empty, resetting queue...")
 
 	@is_allowed_in_config()
 	@commands.command()
