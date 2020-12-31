@@ -15,13 +15,11 @@ async def is_queue_in_channel(ctx):
 		return True, q
 
 
-async def insert_new_queue(ctx, server_id=None, channel_id=None):
-	linked_vc_id = 0
+async def insert_new_queue(ctx, server_id=None, channel_id=None,linked_vc_id=0):
 	if ctx is not None:
 		server_id = ctx.guild.id
 		channel_id = ctx.channel.id
 		ok, old_queue = await is_queue_in_channel(ctx)
-		
 		if ok:
 			linked_vc_id = old_queue.get('linked_vc_id',0)
 	new_queue = {'server_id': server_id, 'channel_id': channel_id, 'locked': False,
@@ -106,7 +104,7 @@ class Queues(commands.Cog):
 					queue, text_channel = await get_linked_queue(before.channel)
 					if text_channel is not None:
 						if len(queue['order']) > 0:
-							await insert_new_queue(None, channel_id=text_channel.id, server_id=member.guild.id)
+							await insert_new_queue(None, channel_id=text_channel.id, server_id=member.guild.id,linked_vc_id=queue.get('linked_vc_id',0))
 							await text_channel.send("Voice channel is empty, resetting queue...")
 
 	@is_allowed_in_config()
