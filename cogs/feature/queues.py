@@ -19,8 +19,13 @@ async def insert_new_queue(ctx, server_id=None, channel_id=None):
 	if ctx is not None:
 		server_id = ctx.guild.id
 		channel_id = ctx.channel.id
+		ok, old_queue = await is_queue_in_channel(ctx)
+		linked_vc_id = 0
+		if ok:
+			linked_vc_id = old_queue.get('linked_vc_id',0)
+			
 	new_queue = {'server_id': server_id, 'channel_id': channel_id, 'locked': False,
-				 'order': [], 'open': True, 'closed': False}
+				 'order': [], 'open': True, 'closed': False, 'linked_vc_id' : linked_vc_id}
 	await db.update_queue(server_id, channel_id, new_queue)
 
 
