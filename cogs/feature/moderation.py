@@ -14,7 +14,7 @@ class Moderation(commands.Cog):
 
 	def __init__(self, bot):
 		self.bot = bot
-		self.mod_register = defaultdict(lambda : {})
+		self.mod_register = defaultdict(lambda : defaultdict(lambda : {} ))
 
 	# @commands.Cog.listener()
 	# async def on_member_remove(self, member):
@@ -28,7 +28,7 @@ class Moderation(commands.Cog):
 		"""bans a member"""
 		
 		await member.ban(reason=reason)
-		self.mod_register['AuditLogAction.ban'][member.id] = ctx.author
+		self.mod_register[ctx.guild]['AuditLogAction.ban'][member.id] = ctx.author
 		await ctx.send(f"{str(member)} was banned.")
 
 	@commands.has_guild_permissions(kick_members=True)
@@ -44,7 +44,7 @@ class Moderation(commands.Cog):
 	async def mute(self, ctx, member: discord.Member):
 		"""server mute a member"""
 
-		self.mod_register['AuditLogAction.member_update'][member.id] = ctx.author
+		self.mod_register[ctx.guild]['AuditLogAction.member_update'][member.id] = ctx.author
 		if member.voice is not None:
 			await member.edit(mute=True)
 			await ctx.send(f"{member} was muted :thumbsup:")
@@ -60,7 +60,7 @@ class Moderation(commands.Cog):
 	async def unmute(self, ctx, member: discord.Member):
 		"""server unmute a member"""
 		
-		self.mod_register['AuditLogAction.member_update'][member.id] = ctx.author
+		self.mod_register[ctx.guild]['AuditLogAction.member_update'][member.id] = ctx.author
 		if member.voice is not None:
 			await member.edit(mute=False)
 			await  ctx.send(f"{member} was unmuted :thumbsup:")
