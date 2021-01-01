@@ -25,15 +25,6 @@ class DevOps(commands.Cog):
 	async def mem_check(self, ctx):
 		mem = tracker.SummaryTracker()
 		print(sorted(mem.create_summary(), reverse=True, key=itemgetter(2))[:10])
-		
-	@dev()
-	@commands.command()
-	async def vanity(self, ctx):		
-		try:
-			inv = await ctx.guild.vanity_invite()
-		except discord.errors.HTTPException,discord.errors.Forbidden:
-			inv = 'None'
-		await ctx.send(inv)
 
 
 def setup(bot):
