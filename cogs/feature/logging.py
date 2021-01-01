@@ -523,10 +523,11 @@ class Logging(commands.Cog):
 		while t < 200:
 			updated_invites = await guild.invites()
 			try:
-				vanity = await updated_guild.vanity_invite()
+				vanity = await guild.vanity_invite()
 				updated_invites.append(vanity)
-			except Exception as e: print(e)
-			
+				print('v')
+			except Exception as e: 
+				print(e)
 			res = []
 			for invite in updated_invites:
 				try:
