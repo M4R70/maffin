@@ -510,7 +510,7 @@ class Logging(commands.Cog):
 						invites = await updated_guild.invites()		
 						try:
 							invites.append(await ctx.guild.vanity_invite())
-						except discord.errors.HTTPException,discord.errors.Forbidden:
+						except:
 							pass
 						for invite in invites:
 							self.invite_cache[g][invite.code] = invite
