@@ -25,6 +25,15 @@ class DevOps(commands.Cog):
 	async def mem_check(self, ctx):
 		mem = tracker.SummaryTracker()
 		print(sorted(mem.create_summary(), reverse=True, key=itemgetter(2))[:10])
+		
+	@dev()
+	@commands.command()
+	async def vanity(self, ctx):		
+		inv = await ctx.guild.vanity_invite()
+		if inv is not None:
+			await ctx.send(inv)
+		else:
+			await ctx.send('None')
 
 def setup(bot):
 	bot.add_cog(DevOps(bot))
