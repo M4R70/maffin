@@ -29,11 +29,12 @@ class DevOps(commands.Cog):
 	@dev()
 	@commands.command()
 	async def vanity(self, ctx):		
-		inv = await ctx.guild.vanity_invite()
-		if inv is not None:
-			await ctx.send(inv)
-		else:
-			await ctx.send('None')
+		try:
+			inv = await ctx.guild.vanity_invite()
+		except discord.errors.HTTPException,discord.errors.Forbidden:
+			inv = 'None'
+		await ctx.send(inv)
+
 
 def setup(bot):
 	bot.add_cog(DevOps(bot))
