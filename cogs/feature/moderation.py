@@ -24,9 +24,11 @@ class Moderation(commands.Cog):
 
 	@commands.has_guild_permissions(ban_members=True)
 	@commands.command()
-	async def ban(self, ctx, member: discord.Member,*, reason):
+	async def ban(self, ctx, member: discord.Member,*, reason=""):
 		"""bans a member"""
 		self.mod_register[ctx.guild]['AuditLogAction.ban'][member.id] = ctx.author
+		if reason == "":
+			reason = None
 		await member.ban(reason=reason)
 		
 		await ctx.send(f"{str(member)} was banned.")
