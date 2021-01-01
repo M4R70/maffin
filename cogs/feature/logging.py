@@ -62,6 +62,8 @@ def overwrite_diff(before, after, e):
 	return t
 
 
+
+
 def member_embed(member, title, color=discord.Colour.blue(), entry=None, mod=True):
 	e = discord.Embed()
 	e.colour = color
@@ -113,21 +115,7 @@ def voice_state_diff(before, after):
 		return None
 
 
-async def log_server_mute(diff, member):
-	channel = await get_channel(member.guild, 'mute_log_channel_id')
-	if channel is None:
-		return
 
-	entry = await self.search_entry(member.guild, member, discord.AuditLogAction.member_update)
-
-	if diff == "Muted":
-		color = discord.Colour.red()
-	else:
-		color = discord.Colour.green()
-
-	e = member_embed(member, title=f"{diff}", color=color, entry=entry)
-
-	await channel.send(embed=e)
 
 
 async def is_role_important(role):
@@ -160,6 +148,23 @@ class Logging(commands.Cog):
 		self.invite_cache = defaultdict(lambda: {})
 		self.crawl_invites.start()
 
+		
+	async def log_server_mute(self,diff, member):
+		channel = await get_channel(member.guild, 'mute_log_channel_id')
+		if channel is None:
+			return
+
+		entry = await self.search_entry(member.guild, member, discord.AuditLogAction.member_update)
+
+		if diff == "Muted":
+			color = discord.Colour.red()
+		else:
+			color = discord.Colour.green()
+
+		e = member_embed(member, title=f"{diff}", color=color, entry=entry)
+
+		await channel.send(embed=e)
+		
 	async def search_entry(self,guild, target_user, action):
 		t = 1
 		entry = None
@@ -427,7 +432,7 @@ class Logging(commands.Cog):
 			return
 
 		elif diff == "Muted" or diff == "Unmuted":
-			await log_server_mute(diff, member)
+			await self.log_server_mute(diff, member)
 			return
 		else:
 			e = member_embed(member,diff)
