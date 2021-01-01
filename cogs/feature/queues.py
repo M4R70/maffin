@@ -466,7 +466,7 @@ class Queues(commands.Cog):
 		if queue.get('event',{'active':False})['active']:
 			await self.display_queue_update(ctx, queue)
 			display_channel = ctx.guild.get_channel(queue['event']['display_channel'])
-			await ctx.send(f'The queue is posted in #{display_channel} :)"
+			await ctx.send(f'The queue is posted in #{display_channel} :)")
 			return
 		embeds = await make_queue_embeds(ctx, queue)
 
