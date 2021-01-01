@@ -44,6 +44,7 @@ class Moderation(commands.Cog):
 	async def mute(self, ctx, member: discord.Member):
 		"""server mute a member"""
 
+		self.mod_register['AuditLogAction.member_update'][member.id] = ctx.author
 		if member.voice is not None:
 			await member.edit(mute=True)
 			await ctx.send(f"{member} was muted :thumbsup:")
@@ -51,21 +52,22 @@ class Moderation(commands.Cog):
 			await db.update_setting(member.guild.id, 'to_be_server_muted', {"$set": {str(member.id): True}})
 			await ctx.send(f'{member} will be muted :thumbsup:')
 		
-		self.mod_register['AuditLogAction.member_update'][member.id] = ctx.author
+		
 		return
 
 	@commands.has_guild_permissions(mute_members=True)
 	@commands.command()
 	async def unmute(self, ctx, member: discord.Member):
 		"""server unmute a member"""
-
+		
+		self.mod_register['AuditLogAction.member_update'][member.id] = ctx.author
 		if member.voice is not None:
 			await member.edit(mute=False)
 			await  ctx.send(f"{member} was unmuted :thumbsup:")
 		else:
 			await db.update_setting(member.guild.id, 'to_be_server_muted', {"$set": {str(member.id): False}})
 			await ctx.send(f"{member} will be unmuted :thumbsup:")
-		self.mod_register['AuditLogAction.member_update'][member.id] = ctx.author
+		
 		return
 
 	@commands.Cog.listener()
