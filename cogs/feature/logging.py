@@ -509,7 +509,8 @@ class Logging(commands.Cog):
 						updated_guild = self.bot.get_guild(g.id)
 						invites = await updated_guild.invites()		
 						try:
-							invites.append(await ctx.guild.vanity_invite())
+							vanity = await ctx.guild.vanity_invite()
+							invites.append(vanity)
 						except:
 							pass
 						for invite in invites:
