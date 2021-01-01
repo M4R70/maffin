@@ -91,7 +91,7 @@ async def search_entry(guild, target_user, action):
 		async for e in guild.audit_logs(action=action, limit=10):
 			if e.target.id == target_user.id:
 				if entry.user == self.bot.user:
-					entry.user = self.bot.cogs['Moderation'].mod_register[action].pop(user.id,self.bot.user)
+					entry.user = self.bot.cogs['Moderation'].mod_register[str(action)].pop(user.id,self.bot.user)
 				return e
 		await asyncio.sleep(t)
 		t += t
