@@ -19,7 +19,7 @@ async def get_queue(server_id, channel_id):
 	doc = await get_setting(server_id, 'existing_queues')
 	if doc is None:
 		return None
-	return doc[str(channel_id)]
+	return doc.get(str(channel_id))
 
 
 async def update_queue(server_id, channel_id, new_queue):
