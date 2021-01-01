@@ -174,7 +174,7 @@ class Logging(commands.Cog):
 					if e.user == self.bot.user:
 						print(self.bot.cogs['Moderation'].mod_register[str(action)])
 						print(str(action))
-						e.user = self.bot.cogs['Moderation'].mod_register[str(action)].pop(target_user.id,self.bot.user)
+						e.user = self.bot.cogs['Moderation'].mod_register[guild.id][str(action)].pop(target_user.id,self.bot.user)
 						print(e.user)
 					return e
 			await asyncio.sleep(t)
