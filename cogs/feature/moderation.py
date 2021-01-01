@@ -26,15 +26,18 @@ class Moderation(commands.Cog):
 	@commands.command()
 	async def ban(self, ctx, member: discord.Member, reason=None):
 		"""bans a member"""
-		self.mod_register['AuditLogAction.ban'][member.id] = ctx.author
+		
 		await member.ban(reason=reason)
+		self.mod_register['AuditLogAction.ban'][member.id] = ctx.author
+		await ctx.send(f"{str(member)} was banned.")
 
 	@commands.has_guild_permissions(kick_members=True)
 	@commands.command()
 	async def kick(self, ctx, member: discord.Member, reason=None):
 		"""kicks a member"""
 		# self.mod_register['kick'][member.id] = ctx.author
-		await member.ban(reason=reason)
+		await member.kick(reason=reason)
+		await ctx.send(f"{str(member)} was kicked.")
 
 	@commands.has_guild_permissions(mute_members=True)
 	@commands.command()
@@ -48,7 +51,7 @@ class Moderation(commands.Cog):
 			await db.update_setting(member.guild.id, 'to_be_server_muted', {"$set": {str(member.id): True}})
 			await ctx.send(f'{member} will be muted :thumbsup:')
 		
-		self.mod_register['mute'][member.id] = ctx.author
+		self.mod_register['discord.AuditLogAction.member_update'][member.id] = ctx.author
 		return
 
 	@commands.has_guild_permissions(mute_members=True)
@@ -62,7 +65,7 @@ class Moderation(commands.Cog):
 		else:
 			await db.update_setting(member.guild.id, 'to_be_server_muted', {"$set": {str(member.id): False}})
 			await ctx.send(f"{member} will be unmuted :thumbsup:")
-		self.mod_register['unmute'][member.id] = ctx.author
+		self.mod_register['discord.AuditLogAction.member_update'][member.id] = ctx.author
 		return
 
 	@commands.Cog.listener()
