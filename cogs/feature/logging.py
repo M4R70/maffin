@@ -509,10 +509,10 @@ class Logging(commands.Cog):
 						updated_guild = self.bot.get_guild(g.id)
 						invites = await updated_guild.invites()		
 						try:
-							vanity = await g.vanity_invite()
+							vanity = await updated_guild.vanity_invite()
 							invites.append(vanity)
-						except:
-							pass
+						except Exception as e: 
+							print(e)
 						for invite in invites:
 							self.invite_cache[g][invite.code] = invite
 					except discord.errors.Forbidden:
