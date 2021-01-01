@@ -84,19 +84,6 @@ def add_mod(entry, e):
 		e.add_field(name="Moderator", value="failed to obtain", inline=False)
 
 
-async def search_entry(guild, target_user, action):
-	t = 1
-	entry = None
-	while entry is None:
-		async for e in guild.audit_logs(action=action, limit=10):
-			if e.target.id == target_user.id:
-				if e.user == self.bot.user:
-					e.user = self.bot.cogs['Moderation'].mod_register[str(action)].pop(target_user.id,self.bot.user)
-				return e
-		await asyncio.sleep(t)
-		t += t
-		if t > 60:
-			return None
 
 
 async def ask_for_reason(entry, message, user):
@@ -173,6 +160,20 @@ class Logging(commands.Cog):
 		self.invite_cache = defaultdict(lambda: {})
 		self.crawl_invites.start()
 
+	async def search_entry(self,guild, target_user, action):
+		t = 1
+		entry = None
+		while entry is None:
+			async for e in guild.audit_logs(action=action, limit=10):
+				if e.target.id == target_user.id:
+					if e.user == self.bot.user:
+						e.user = self.bot.cogs['Moderation'].mod_register[str(action)].pop(target_user.id,self.bot.user)
+					return e
+			await asyncio.sleep(t)
+			t += t
+			if t > 60:
+				return None
+		
 	@commands.Cog.listener()
 	async def on_member_join(self, member):
 		channel = await get_channel(member.guild, 'join_log_channel_id')
@@ -251,7 +252,7 @@ class Logging(commands.Cog):
 		if channel is None:
 			return
 
-		entry = await search_entry(guild, user, discord.AuditLogAction.unban)
+		entry = await self.search_entry(guild, user, discord.AuditLogAction.unban)
 		e = member_embed(user, title="UNBAN", color=discord.Colour.green(), entry=entry)
 
 		await channel.send(embed=e)
@@ -262,7 +263,7 @@ class Logging(commands.Cog):
 		if channel is None:
 			return
 
-		entry = await search_entry(guild, user, discord.AuditLogAction.ban)
+		entry = await self.search_entry(guild, user, discord.AuditLogAction.ban)
 		
 		e = member_embed(user, title="BAN", color=discord.Colour.red(), entry=entry)
 
@@ -277,7 +278,7 @@ class Logging(commands.Cog):
 		channel = await get_channel(message.guild, 'text_log_channel_id')
 		if channel is None:
 			return
-		entry = await search_entry(message.guild, message.author, discord.AuditLogAction.message_delete)
+		entry = await self.search_entry(message.guild, message.author, discord.AuditLogAction.message_delete)
 		e = member_embed(message.author, color=discord.Colour.red(), title="Message Deleted", entry=entry)
 		post_separate = False
 		if len(message.content) < 1000:
@@ -295,7 +296,7 @@ class Logging(commands.Cog):
 		if channel is None:
 			return
 
-		entry = await search_entry(role.guild, role, discord.AuditLogAction.role_delete)
+		entry = await self.search_entry(role.guild, role, discord.AuditLogAction.role_delete)
 		e = discord.Embed()
 		e.title = "Role Deleted"
 		e.colour = role.colour
@@ -314,7 +315,7 @@ class Logging(commands.Cog):
 
 		important = [p[0] for p in role.permissions if p[1] and p[0] in important_perms]
 
-		entry = await search_entry(role.guild, role, discord.AuditLogAction.role_create)
+		entry = await self.search_entry(role.guild, role, discord.AuditLogAction.role_create)
 		e = discord.Embed()
 		e.title = "Role Created"
 		e.colour = role.colour
@@ -341,7 +342,7 @@ class Logging(commands.Cog):
 				elif perm not in before_perms and perm in after_perms:
 					gained.append(perm)
 
-			entry = await search_entry(before.guild, after, discord.AuditLogAction.role_update)
+			entry = await self.search_entry(before.guild, after, discord.AuditLogAction.role_update)
 			e = discord.Embed()
 			e.title = "Role Permissions Updated"
 			e.add_field(name="Role", value=str(after), inline=False)
@@ -374,7 +375,7 @@ class Logging(commands.Cog):
 				action = discord.AuditLogAction.overwrite_delete
 			elif t == "update":
 				action = discord.AuditLogAction.overwrite_update
-			entry = await search_entry(after.guild,after,action)
+			entry = await self.search_entry(after.guild,after,action)
 			add_mod(entry, e)
 			await channel.send(embed=e)
 
@@ -383,7 +384,7 @@ class Logging(commands.Cog):
 			e.title = "Channel Renamed"
 			e.add_field(name="Old Name", value=str(before),inline=False)
 			e.add_field(name="New Name", value=str(after), inline=False)
-			entry = await search_entry(after.guild,after,discord.AuditLogAction.channel_update)
+			entry = await self.search_entry(after.guild,after,discord.AuditLogAction.channel_update)
 			add_mod(entry, e)
 			await channel.send(embed=e)
 
@@ -398,7 +399,7 @@ class Logging(commands.Cog):
 		e = discord.Embed()
 		e.title = "Channel Created"
 		e.add_field(name="Channel", value=str(new_channel),inline=False)
-		entry = await search_entry(new_channel.guild, new_channel, discord.AuditLogAction.channel_create)
+		entry = await self.search_entry(new_channel.guild, new_channel, discord.AuditLogAction.channel_create)
 		add_mod(entry, e)
 		await channel.send(embed=e)
 
@@ -410,7 +411,7 @@ class Logging(commands.Cog):
 		e = discord.Embed()
 		e.title = "Channel Deleted"
 		e.add_field(name="Channel", value=str(del_channel),inline=False)
-		entry = await search_entry(del_channel.guild, del_channel, discord.AuditLogAction.channel_delete)
+		entry = await self.search_entry(del_channel.guild, del_channel, discord.AuditLogAction.channel_delete)
 		add_mod(entry, e)
 		await channel.send(embed=e)
 
