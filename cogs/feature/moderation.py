@@ -24,7 +24,7 @@ class Moderation(commands.Cog):
 
 	@commands.has_guild_permissions(ban_members=True)
 	@commands.command()
-	async def ban(self, ctx, member: discord.Member,*, reason=None):
+	async def ban(self, ctx, member: discord.Member,*, reason):
 		"""bans a member"""
 		self.mod_register[ctx.guild]['AuditLogAction.ban'][member.id] = ctx.author
 		await member.ban(reason=reason)
@@ -33,7 +33,7 @@ class Moderation(commands.Cog):
 
 	@commands.has_guild_permissions(kick_members=True)
 	@commands.command()
-	async def kick(self, ctx, member: discord.Member,*, reason=None):
+	async def kick(self, ctx, member: discord.Member,*, reason):
 		"""kicks a member"""
 		# self.mod_register['kick'][member.id] = ctx.author
 		await member.kick(reason=reason)
