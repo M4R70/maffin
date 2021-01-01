@@ -172,9 +172,10 @@ class Logging(commands.Cog):
 			async for e in guild.audit_logs(action=action, limit=10):
 				if e.target.id == target_user.id:
 					if e.user == self.bot.user:
+						print(self.bot.cogs['Moderation'].mod_register[str(action)])
+						print(str(action))
 						e.user = self.bot.cogs['Moderation'].mod_register[str(action)].pop(target_user.id,self.bot.user)
 						print(e.user)
-						print(self.bot.cogs['Moderation'].mod_register[str(action)])
 					return e
 			await asyncio.sleep(t)
 			t += t
