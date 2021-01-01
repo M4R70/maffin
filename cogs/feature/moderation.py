@@ -6,6 +6,7 @@ import utils.db
 import datetime
 import utils.db as db
 from utils.checks import is_cog_enabled
+from collections import defaultdict
 
 
 class Moderation(commands.Cog):
@@ -13,7 +14,7 @@ class Moderation(commands.Cog):
 
 	def __init__(self, bot):
 		self.bot = bot
-		self.mod_register = {"ban": {}, 'kick': {}}
+		self.mod_register = defaultdict(lambda : {})
 
 	# @commands.Cog.listener()
 	# async def on_member_remove(self, member):
