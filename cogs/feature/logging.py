@@ -90,6 +90,8 @@ async def search_entry(guild, target_user, action):
 	while entry is None:
 		async for e in guild.audit_logs(action=action, limit=10):
 			if e.target.id == target_user.id:
+				if entry.user == self.bot.user:
+					entry.user = self.bot.cogs['Moderation'].mod_register[action].pop(user.id,self.bot.user)
 				return e
 		await asyncio.sleep(t)
 		t += t
@@ -261,11 +263,7 @@ class Logging(commands.Cog):
 			return
 
 		entry = await search_entry(guild, user, discord.AuditLogAction.ban)
-		if entry.user == self.bot.user:
-			banner = self.bot.cogs['Moderation'].mod_register['ban'].get(user.id)
-			if banner is not None:
-				entry.user = banner
-
+		
 		e = member_embed(user, title="BAN", color=discord.Colour.red(), entry=entry)
 
 		e.add_field(name="Reason", value=entry.reason)
