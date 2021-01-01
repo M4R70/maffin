@@ -525,7 +525,6 @@ class Logging(commands.Cog):
 			try:
 				vanity = await guild.vanity_invite()
 				updated_invites.append(vanity)
-				print('v')
 			except Exception as e: 
 				print(e)
 			res = []
