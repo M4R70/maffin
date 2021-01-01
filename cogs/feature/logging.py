@@ -118,7 +118,7 @@ async def log_server_mute(diff, member):
 	if channel is None:
 		return
 
-	entry = await search_entry(member.guild, member, discord.AuditLogAction.member_update)
+	entry = await self.search_entry(member.guild, member, discord.AuditLogAction.member_update)
 
 	if diff == "Muted":
 		color = discord.Colour.red()
