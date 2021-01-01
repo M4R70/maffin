@@ -83,7 +83,7 @@ def add_mod(entry, e):
 		e.add_field(name="Moderator ID", value=str(entry.user.id))
 	# e.add_field(name="\u200b", value="\u200b", inline=False)
 	else:
-		e.add_field(name="Moderator", value="failed to obtain", inline=False)
+		e.add_field(name="Moderator", value="None (user)", inline=False)
 
 
 
@@ -438,7 +438,7 @@ class Logging(commands.Cog):
 			await self.log_server_mute(diff, member)
 			return
 		else:
-			e = member_embed(member,diff)
+			e = member_embed(member,diff, mod=False)
 
 		await channel.send(embed=e)
 
