@@ -507,7 +507,11 @@ class Logging(commands.Cog):
 				if join_log_channel is not None:
 					try:
 						updated_guild = self.bot.get_guild(g.id)
-						invites = await updated_guild.invites()
+						invites = await updated_guild.invites()		
+						try:
+							invites.append(await ctx.guild.vanity_invite())
+						except discord.errors.HTTPException,discord.errors.Forbidden:
+							pass
 						for invite in invites:
 							self.invite_cache[g][invite.code] = invite
 					except discord.errors.Forbidden:
