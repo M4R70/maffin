@@ -111,12 +111,18 @@ class Queues(commands.Cog):
 	async def qcopy(self, ctx, *, source_channel: discord.TextChannel):
 		"""Copies the queue from the indicated text channel"""
 		source_queue = await db.get_queue(source_channel.guild.id, source_channel.id)
+		target_queue = await db.get_queue(ctx.guild.id, ctx.channel.id)
 		if source_queue is None:
-			await ctx.send("There is no queue in that channel")
+			await ctx.send(f"There is no queue in <#{source_channel.id}>")
 			return
-		source_queue['channel_id'] = ctx.channel.id
-		await db.update_queue(ctx.guild.id, ctx.channel.id, source_queue)
-		await ctx.send(f"Copied queue from {source_channel} to {ctx.channel}")
+		if target_queue is None:
+			await insert_new_queue(ctx)
+			target_queue = await db.get_queue(ctx.guild.id, ctx.channel.id)
+		copy_params = ['order','locked','closed']
+		for p in copy_params:
+			target_queue[p] = source_queue[p]
+		await db.update_queue(ctx.guild.id, ctx.channel.id, target_queue)
+		await ctx.send(f"Copied queue from <#{source_channel.id}> to <#{ctx.channel}> :thumbsup:")
 
 	async def display_queue_update(self, ctx, queue):
 		active = queue.get('event')
