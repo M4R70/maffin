@@ -445,7 +445,7 @@ class Logging(commands.Cog):
 	@commands.Cog.listener()
 	async def on_member_update(self, before, after):
 
-		entry = await self.search_entry(member.guild, after, discord.AuditLogAction.member_update)
+		entry = await self.search_entry(after.guild, after, discord.AuditLogAction.member_update)
 		e = member_embed(after, color=discord.Colour.purple(), title='asd',entry=entry)
 		
 		if before.roles != after.roles:
