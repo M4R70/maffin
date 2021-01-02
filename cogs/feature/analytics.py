@@ -43,10 +43,13 @@ def parse_voice_mins(raw_voice_df):
 			elif conn_row is not None and row['event'] == 'disconnected':
 				delta = row['datetime'] - conn_row['datetime']
 				len = int(delta.total_seconds() / 60)
-				vc_mins_df = vc_mins_df.append(
-					{'member_id': row['member_id'], 'delta': delta, 'datetime': conn_row['datetime'],
-					 'len': len},
-					ignore_index=True)
+				try:
+					vc_mins_df = vc_mins_df.append(
+						{'member_id': row['member_id'], 'delta': delta, 'datetime': conn_row['datetime'],
+						 'len': len},
+						ignore_index=True)
+				except Exception as e:
+					print(e)
 				# print(int(delta.total_seconds()/60))
 				conn_row = None
 
