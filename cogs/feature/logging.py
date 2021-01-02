@@ -445,7 +445,9 @@ class Logging(commands.Cog):
 	@commands.Cog.listener()
 	async def on_member_update(self, before, after):
 
-		e = member_embed(after, color=discord.Colour.purple(), title='asd')
+		entry = await self.search_entry(member.guild, after, discord.AuditLogAction.member_update)
+		e = member_embed(after, color=discord.Colour.purple(), title='asd',entry=entry)
+		
 		if before.roles != after.roles:
 			channel = await get_channel(before.guild, 'role_log_channel_id')
 			if channel is None:
