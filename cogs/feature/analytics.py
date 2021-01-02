@@ -214,6 +214,9 @@ class Analytics(commands.Cog):
 		"""!stats <member=None> <n_days=30> <low/mid/full>"""
 		msg = await ctx.send('processing....')
 		member, n, query, level = await parse_args(args, ctx)
+		if member is None:
+			await ctx.send('server wide stats not implemented yet, please specify a user')
+			return
 		e = None
 		print(level)
 		text_data = await db.get(ctx.guild.id, 'analytics.text', query, list=True)
