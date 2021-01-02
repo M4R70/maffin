@@ -122,7 +122,7 @@ class Queues(commands.Cog):
 		for p in copy_params:
 			target_queue[p] = source_queue[p]
 		await db.update_queue(ctx.guild.id, ctx.channel.id, target_queue)
-		await ctx.send(f"Copied queue from <#{source_channel.id}> to <#{ctx.channel}> :thumbsup:")
+		await ctx.send(f"Copied queue from <#{source_channel.id}> to <#{ctx.channel.id}> :thumbsup:")
 
 	async def display_queue_update(self, ctx, queue):
 		active = queue.get('event')
@@ -457,7 +457,7 @@ class Queues(commands.Cog):
 			text_channel = ctx.guild.get_channel(int(queue.get('channel_id',0)))
 			voice_channel = ctx.guild.get_channel(int(queue.get('linked_vc_id',0)))
 			if voice_channel is not None and text_channel is not None:
-				res+= str(text_channel) + ' ' + str(voice_channel) + '\n'
+				res+= str(text_channel) + '->' + str(voice_channel) + '\n'
 			
 		await ctx.send(res)
 	
