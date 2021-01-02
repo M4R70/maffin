@@ -127,7 +127,7 @@ class Moderation(commands.Cog):
 
 		if limit is None:
 			limit = 50
-
+	
 		if guy is not None:
 			def check(message):
 				return message.author == guy
@@ -136,6 +136,7 @@ class Moderation(commands.Cog):
 			after = message.created_at
 			limit = 300
 
+		limit = min(limit,100)
 		await ctx.channel.purge(limit=limit, check=check, after=after)
 		msg = await ctx.channel.send("**Cleared** :thumbsup:")
 		await msg.delete(delay=1)
