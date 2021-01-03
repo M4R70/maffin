@@ -173,6 +173,26 @@ class ReactionRoles(commands.Cog):
 		await ctx.message.delete()
 
 
+	@commands.Cog.listener()
+	async def on_raw_reaction_remove(self, payload):
+		guild, channel, message, user, emoji = await self.parse_payload(payload)
+		if user.id == self.bot.user.id:
+			return
+		db_info = await db.get_setting(guild.id, 'reactionRoles')
+		db_info = db_info.get(str(message.id))
+
+		if db_info is None:
+			return
+		try:
+			role_id = int(db_info['used_emojis'][emoji])
+		except KeyError:
+			return
+		role = guild.get_role(role_id)
+		#await message.remove_reaction(emoji,user)
+		user_roles_ids = [r.id for r in user.roles]
+
+		if role in user.roles:
+			await user.remove_roles(role)
 
 	@commands.Cog.listener()
 	async def on_raw_reaction_add(self, payload):
@@ -189,7 +209,7 @@ class ReactionRoles(commands.Cog):
 		except KeyError:
 			return
 		role = guild.get_role(role_id)
-		await message.remove_reaction(emoji,user)
+		#await message.remove_reaction(emoji,user)
 		user_roles_ids = [r.id for r in user.roles]
 		if db_info['exclusive']:
 			for r_emoji, role_id in db_info['used_emojis'].items():
@@ -198,9 +218,7 @@ class ReactionRoles(commands.Cog):
 						r = guild.get_role(role_id)
 						await user.remove_roles(r)
 						break
-		if role in user.roles:
-			await user.remove_roles(role)
-		else:
+		if role not in user.roles:
 			await user.add_roles(role)
 		
 
