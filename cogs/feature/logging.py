@@ -218,7 +218,6 @@ class Logging(commands.Cog):
 	async def on_message(self, message):
 		if message.reference is not None:
 			ref = message.reference.resolved
-			print(ref)
 			if ref is None:
 				ref = await message.channel.fetch_message(message.reference.message_id)
 
