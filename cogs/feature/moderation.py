@@ -87,10 +87,10 @@ class Moderation(commands.Cog):
 			if should_mute is not None:
 				if should_mute == True:
 					if not member.voice.mute:
-						try:
-							await member.edit(mute=True)
-						except:
-							pass
+						await member.edit(mute=True)
+				else:
+					if member.voice.mute:
+						await member.edit(mute=False)
 
 
 	@commands.guild_only()
