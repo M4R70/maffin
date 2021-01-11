@@ -215,6 +215,40 @@ class Logging(commands.Cog):
 			logging.waring(f"logging can't send channel on server {channel.guild} channel {channel} ")
 
 	@commands.Cog.listener()
+	async def on_message(self, message):
+		if message.reference is not None:
+			ref = message.reference.resolved
+			print(ref)
+			if ref is None:
+				ref = await message.channel.fetch_message(message.reference.message_id)
+
+			if ref is None:
+				return
+
+			if ref.author != self.bot.user:
+				return
+
+			if len(ref.embeds) == 0:
+				return
+
+			embed = ref.embeds[0]
+			if embed.title == "Queue:":
+				return
+			added = False
+			for i,f in enumerate(embed.fields):
+				if f.name == "Reason":
+					embed.set_field_at(i,value=message.clean_content,name=f.name,inline=False)
+					added = True
+					break
+			if not added:
+				embed.add_field(name="Reason",value=message.clean_content,inline=False)
+
+			await ref.edit(embed=embed)
+			await message.delete()
+
+
+
+	@commands.Cog.listener()
 	async def on_message_edit(self, before, after):
 		channel = await get_channel(before.guild, 'text_log_channel_id')
 		if channel is None:
@@ -275,7 +309,7 @@ class Logging(commands.Cog):
 		
 		e = member_embed(user, title="BAN", color=discord.Colour.red(), entry=entry)
 
-		e.add_field(name="Reason", value=entry.reason)
+		e.add_field(name="Reason", value=entry.reason,inline=False)
 
 		message = await channel.send(embed=e)
 		if entry.reason is None:
