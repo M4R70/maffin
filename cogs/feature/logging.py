@@ -19,7 +19,6 @@ async def get_channel(guild, channel_name):
 
 
 def ow_to_str(x):
-
 	if x is True:
 		return "Allow"
 	if x is False:
@@ -41,27 +40,25 @@ def overwrite_diff(before, after, e):
 			e.add_field(name='Overwrite Added', value=k, inline=False)
 			for perm in after[k]:
 				if perm[1] is not None:
-					e.add_field(name=perm[0], value=ow_to_str(perm[1]),inline=False)
+					e.add_field(name=perm[0], value=ow_to_str(perm[1]), inline=False)
 	elif len(deleted_keys) > 0:
 		t = 'delete'
 		for k in deleted_keys:
 			e.add_field(name='Overwrite Removed', value=k, inline=False)
 			for perm in before[k]:
 				if perm[1] is not None:
-					e.add_field(name=perm[0], value=ow_to_str(perm[1]),inline=False)
+					e.add_field(name=perm[0], value=ow_to_str(perm[1]), inline=False)
 	else:
-		t= 'update'
+		t = 'update'
 		for k in after_keys | before_keys:
 			if before[k] != after[k]:
-				e.add_field(name='Overwrite Updated', value=k.name.replace('@',' '), inline=False)
+				e.add_field(name='Overwrite Updated', value=k.name.replace('@', ' '), inline=False)
 				for perm in before[k]:
 					to = dict(after[k])[perm[0]]
 					if perm[1] is not None and perm[1] != to:
-						e.add_field(name=perm[0], value=ow_to_str(perm[1]) + '->' + ow_to_str(to),inline=False)
+						e.add_field(name=perm[0], value=ow_to_str(perm[1]) + '->' + ow_to_str(to), inline=False)
 
 	return t
-
-
 
 
 def member_embed(member, title, color=discord.Colour.blue(), entry=None, mod=True):
@@ -86,15 +83,13 @@ def add_mod(entry, e):
 		e.add_field(name="Moderator", value="None (user)", inline=False)
 
 
-
-
 async def ask_for_reason(entry, message, user):
 	mod = entry.user
 	if mod is not None:
 		await mod.send(
-			f"Hey, you banned {str(user)} from {str(message.guild)} but you specified no reason. \n\nTo add one,"
-			f" send me the command `!add_reason {message.id} <reason> ` "
-			f"\n\nNote that you must send this command in the guild, and not here in DMs")
+			f"Hey, you banned {str(user)} from {str(message.guild)} but you specified no reason. \n\n"
+			f"Reply to the linked message to add a reason {message.jump_url}"
+		)
 
 
 def voice_state_diff(before, after):
@@ -113,9 +108,6 @@ def voice_state_diff(before, after):
 
 	else:
 		return None
-
-
-
 
 
 async def is_role_important(role):
@@ -148,8 +140,7 @@ class Logging(commands.Cog):
 		self.invite_cache = defaultdict(lambda: {})
 		self.crawl_invites.start()
 
-		
-	async def log_server_mute(self,diff, member):
+	async def log_server_mute(self, diff, member):
 		channel = await get_channel(member.guild, 'mute_log_channel_id')
 		if channel is None:
 			return
@@ -164,8 +155,8 @@ class Logging(commands.Cog):
 		e = member_embed(member, title=f"{diff}", color=color, entry=entry)
 
 		await channel.send(embed=e)
-		
-	async def search_entry(self,guild, target_user, action):
+
+	async def search_entry(self, guild, target_user, action):
 		t = 1
 		entry = None
 		while entry is None:
@@ -174,14 +165,15 @@ class Logging(commands.Cog):
 					if e.user == self.bot.user:
 						print(self.bot.cogs['Moderation'].mod_register[str(action)])
 						print(str(action))
-						e.user = self.bot.cogs['Moderation'].mod_register[guild][str(action)].pop(target_user.id,self.bot.user)
+						e.user = self.bot.cogs['Moderation'].mod_register[guild][str(action)].pop(target_user.id,
+																								  self.bot.user)
 						print(e.user)
 					return e
 			await asyncio.sleep(t)
 			t += t
 			if t > 60:
 				return None
-		
+
 	@commands.Cog.listener()
 	async def on_member_join(self, member):
 		channel = await get_channel(member.guild, 'join_log_channel_id')
@@ -195,7 +187,7 @@ class Logging(commands.Cog):
 
 		if possible_invites is None:
 			e.add_field(name="Invite could not be retrieved", value=nothing, inline=False)
-		
+
 		elif len(possible_invites) == 1:
 			e.add_field(name="Acount created", value=timeago.format(member.created_at, datetime.datetime.now()))
 			e.add_field(name="Invite used", value=possible_invites[0].url, inline=False)
@@ -234,18 +226,16 @@ class Logging(commands.Cog):
 			if embed.title == "Queue:":
 				return
 			added = False
-			for i,f in enumerate(embed.fields):
+			for i, f in enumerate(embed.fields):
 				if f.name == "Reason":
-					embed.set_field_at(i,value=message.clean_content,name=f.name,inline=False)
+					embed.set_field_at(i, value=message.clean_content, name=f.name, inline=False)
 					added = True
 					break
 			if not added:
-				embed.add_field(name="Reason",value=message.clean_content,inline=False)
+				embed.add_field(name="Reason", value=message.clean_content, inline=False)
 
 			await ref.edit(embed=embed)
 			await message.delete()
-
-
 
 	@commands.Cog.listener()
 	async def on_message_edit(self, before, after):
@@ -305,10 +295,10 @@ class Logging(commands.Cog):
 			return
 
 		entry = await self.search_entry(guild, user, discord.AuditLogAction.ban)
-		
+
 		e = member_embed(user, title="BAN", color=discord.Colour.red(), entry=entry)
 
-		e.add_field(name="Reason", value=entry.reason,inline=False)
+		e.add_field(name="Reason", value=entry.reason, inline=False)
 
 		message = await channel.send(embed=e)
 		if entry.reason is None:
@@ -396,8 +386,6 @@ class Logging(commands.Cog):
 			e.colour = after.colour
 			await channel.send(embed=e)
 
-
-
 	@commands.Cog.listener()
 	async def on_guild_channel_update(self, before, after):
 		channel = await get_channel(after.guild, 'channel_log_channel_id')
@@ -416,21 +404,18 @@ class Logging(commands.Cog):
 				action = discord.AuditLogAction.overwrite_delete
 			elif t == "update":
 				action = discord.AuditLogAction.overwrite_update
-			entry = await self.search_entry(after.guild,after,action)
+			entry = await self.search_entry(after.guild, after, action)
 			add_mod(entry, e)
 			await channel.send(embed=e)
 
 		if before.name != after.name:
 			e = discord.Embed()
 			e.title = "Channel Renamed"
-			e.add_field(name="Old Name", value=str(before),inline=False)
+			e.add_field(name="Old Name", value=str(before), inline=False)
 			e.add_field(name="New Name", value=str(after), inline=False)
-			entry = await self.search_entry(after.guild,after,discord.AuditLogAction.channel_update)
+			entry = await self.search_entry(after.guild, after, discord.AuditLogAction.channel_update)
 			add_mod(entry, e)
 			await channel.send(embed=e)
-
-
-
 
 	@commands.Cog.listener()
 	async def on_guild_channel_create(self, new_channel):
@@ -439,7 +424,7 @@ class Logging(commands.Cog):
 			return
 		e = discord.Embed()
 		e.title = "Channel Created"
-		e.add_field(name="Channel", value=str(new_channel),inline=False)
+		e.add_field(name="Channel", value=str(new_channel), inline=False)
 		entry = await self.search_entry(new_channel.guild, new_channel, discord.AuditLogAction.channel_create)
 		add_mod(entry, e)
 		await channel.send(embed=e)
@@ -451,7 +436,7 @@ class Logging(commands.Cog):
 			return
 		e = discord.Embed()
 		e.title = "Channel Deleted"
-		e.add_field(name="Channel", value=str(del_channel),inline=False)
+		e.add_field(name="Channel", value=str(del_channel), inline=False)
 		entry = await self.search_entry(del_channel.guild, del_channel, discord.AuditLogAction.channel_delete)
 		add_mod(entry, e)
 		await channel.send(embed=e)
@@ -471,7 +456,7 @@ class Logging(commands.Cog):
 			await self.log_server_mute(diff, member)
 			return
 		else:
-			e = member_embed(member,diff, mod=False)
+			e = member_embed(member, diff, mod=False)
 
 		await channel.send(embed=e)
 
@@ -479,8 +464,8 @@ class Logging(commands.Cog):
 	async def on_member_update(self, before, after):
 
 		entry = await self.search_entry(after.guild, after, discord.AuditLogAction.member_role_update)
-		e = member_embed(after, color=discord.Colour.purple(), title='asd',entry=entry)
-		
+		e = member_embed(after, color=discord.Colour.purple(), title='asd', entry=entry)
+
 		if before.roles != after.roles:
 			channel = await get_channel(before.guild, 'role_log_channel_id')
 			if channel is None:
@@ -542,11 +527,11 @@ class Logging(commands.Cog):
 				if join_log_channel is not None:
 					try:
 						updated_guild = self.bot.get_guild(g.id)
-						invites = await updated_guild.invites()		
+						invites = await updated_guild.invites()
 						try:
 							vanity = await updated_guild.vanity_invite()
 							invites.append(vanity)
-						except Exception as e: 
+						except Exception as e:
 							print(e)
 						for invite in invites:
 							self.invite_cache[g][invite.code] = invite
@@ -560,7 +545,7 @@ class Logging(commands.Cog):
 			try:
 				vanity = await guild.vanity_invite()
 				updated_invites.append(vanity)
-			except Exception as e: 
+			except Exception as e:
 				print(e)
 			res = []
 			for invite in updated_invites:
