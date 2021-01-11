@@ -82,16 +82,16 @@ class Moderation(commands.Cog):
 			return
 
 		if before.channel != after.channel:
-			if before.channel is None or before.afk and after.channel is not None:
-				db_info = await db.get_setting(member.guild.id, 'to_be_server_muted')
-				should_mute = db_info.get(str(member.id))
-				if should_mute is not None:
-					if should_mute:
-						await member.edit(mute=True)
-					elif not should_mute:
-						await member.edit(mute=False)
+			db_info = await db.get_setting(member.guild.id, 'to_be_server_muted')
+			should_mute = db_info.get(str(member.id))
+			if should_mute is not None:
+				if should_mute == True:
+					if not member.voice.mute:
+						try:
+							await member.edit(mute=True)
+						except:
+							pass
 
-					await db.update_setting(member.guild.id, 'to_be_server_muted', {"$unset": {str(member.id): 1}})
 
 	@commands.guild_only()
 	@commands.command()
