@@ -61,7 +61,7 @@ def overwrite_diff(before, after, e):
 	return t
 
 
-def member_embed(member, title, color=discord.Colour.blue(), entry=None, mod=True):
+def member_embed(member, title, color=discord.Colour.blue(), entry=None, mod=True,mod_user=None):
 	e = discord.Embed()
 	e.colour = color
 	e.title = title
@@ -70,14 +70,17 @@ def member_embed(member, title, color=discord.Colour.blue(), entry=None, mod=Tru
 	e.add_field(name="User ID", value=member.id, inline=False)
 	# e.add_field(name="\u200b", value="\u200b", inline=False)
 	if mod:
-		add_mod(entry, e)
+		if mod_user is None:
+			add_mod(entry.user, e)
+		else:
+			add_mod(mod_user, e)
 	return e
 
 
-def add_mod(entry, e):
-	if entry is not None:
-		e.add_field(name="Moderator", value=f"{entry.user}")
-		e.add_field(name="Moderator ID", value=str(entry.user.id))
+def add_mod(user, e):
+	if user is not None:
+		e.add_field(name="Moderator", value=f"{user}")
+		e.add_field(name="Moderator ID", value=str(user.id))
 	# e.add_field(name="\u200b", value="\u200b", inline=False)
 	else:
 		e.add_field(name="Moderator", value="None (user)", inline=False)
@@ -140,19 +143,22 @@ class Logging(commands.Cog):
 		self.invite_cache = defaultdict(lambda: {})
 		self.crawl_invites.start()
 
-	async def log_server_mute(self, diff, member,reason = None):
+	async def log_server_mute(self, diff, member,reason = None,mod=None):
 		channel = await get_channel(member.guild, 'mute_log_channel_id')
 		if channel is None:
 			return
-
-		entry = await self.search_entry(member.guild, member, discord.AuditLogAction.member_update)
 
 		if diff == "Muted":
 			color = discord.Colour.red()
 		else:
 			color = discord.Colour.green()
 
-		e = member_embed(member, title=f"{diff}", color=color, entry=entry)
+		entry = None
+		if mod is None:
+			entry = await self.search_entry(member.guild, member, discord.AuditLogAction.member_update)
+
+		e = member_embed(member, title=f"{diff}", color=color, entry=entry,mod_user=mod)
+
 		if reason is not None:
 			e.add_field(name="Reason",value=reason,inline=False)
 

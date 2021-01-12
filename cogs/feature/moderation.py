@@ -50,7 +50,6 @@ class Moderation(commands.Cog):
 			reason = None
 
 		self.mod_register[ctx.guild]['AuditLogAction.member_update'][member.id] = ctx.author
-		await asyncio.sleep(0.1)
 		await self.bot.cogs['Logging'].log_server_mute('Muted', member,reason=reason)
 		if member.voice is not None:
 			await member.edit(mute=True)
@@ -69,7 +68,6 @@ class Moderation(commands.Cog):
 		if reason == "":
 			reason = None
 		self.mod_register[ctx.guild]['AuditLogAction.member_update'][member.id] = ctx.author
-		await asyncio.sleep(0.1)
 		await self.bot.cogs['Logging'].log_server_mute('Unmuted', member,reason=reason)
 		if member.voice is not None:
 			await member.edit(mute=False)
