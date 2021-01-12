@@ -140,7 +140,7 @@ class Logging(commands.Cog):
 		self.invite_cache = defaultdict(lambda: {})
 		self.crawl_invites.start()
 
-	async def log_server_mute(self, diff, member):
+	async def log_server_mute(self, diff, member,reason = None):
 		channel = await get_channel(member.guild, 'mute_log_channel_id')
 		if channel is None:
 			return
@@ -153,6 +153,8 @@ class Logging(commands.Cog):
 			color = discord.Colour.green()
 
 		e = member_embed(member, title=f"{diff}", color=color, entry=entry)
+		if reason is not None:
+			e.add_field(name="Reason",value=reason,inline=False)
 
 		await channel.send(embed=e)
 
@@ -453,8 +455,8 @@ class Logging(commands.Cog):
 			return
 
 		elif diff == "Muted" or diff == "Unmuted":
-			await self.log_server_mute(diff, member)
 			return
+
 		else:
 			e = member_embed(member, diff, mod=False)
 
