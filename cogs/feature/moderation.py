@@ -7,7 +7,8 @@ import datetime
 import utils.db as db
 from utils.checks import is_cog_enabled
 from collections import defaultdict
-
+import typing
+import asyncio
 
 class Moderation(commands.Cog):
 	"""The description for Moderation goes here."""
@@ -43,11 +44,13 @@ class Moderation(commands.Cog):
 
 	@commands.has_guild_permissions(mute_members=True)
 	@commands.command()
-	async def mute(self, ctx, member: discord.Member,*,reason):
+	async def mute(self, ctx, member: discord.Member,*,reason:typing.Optional[str]):
 		"""server mute a member"""
 		if reason == "":
 			reason = None
+
 		self.mod_register[ctx.guild]['AuditLogAction.member_update'][member.id] = ctx.author
+		await asyncio.sleep(0.1)
 		await self.bot.cogs['Logging'].log_server_mute('Muted', member,reason=reason)
 		if member.voice is not None:
 			await member.edit(mute=True)
@@ -61,11 +64,12 @@ class Moderation(commands.Cog):
 
 	@commands.has_guild_permissions(mute_members=True)
 	@commands.command()
-	async def unmute(self, ctx, member: discord.Member,*,reason):
+	async def unmute(self, ctx, member: discord.Member,*,reason:typing.Optional[str]):
 		"""server unmute a member"""
 		if reason == "":
 			reason = None
 		self.mod_register[ctx.guild]['AuditLogAction.member_update'][member.id] = ctx.author
+		await asyncio.sleep(0.1)
 		await self.bot.cogs['Logging'].log_server_mute('Unmuted', member,reason=reason)
 		if member.voice is not None:
 			await member.edit(mute=False)
