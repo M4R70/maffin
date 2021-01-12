@@ -340,7 +340,7 @@ class Logging(commands.Cog):
 		e.title = "Role Deleted"
 		e.colour = role.colour
 		e.add_field(name="Role", value=str(role))
-		add_mod(entry, e)
+		add_mod(entry.user, e)
 		await channel.send(embed=e)
 
 	@commands.Cog.listener()
@@ -359,7 +359,7 @@ class Logging(commands.Cog):
 		e.title = "Role Created"
 		e.colour = role.colour
 		e.add_field(name="Role", value=str(role), inline=False)
-		add_mod(entry, e)
+		add_mod(entry.user, e)
 
 		e.add_field(name="Important Permissions", value=f"""{' || '.join(important)}""", inline=False)
 		await channel.send(embed=e)
@@ -385,7 +385,7 @@ class Logging(commands.Cog):
 			e = discord.Embed()
 			e.title = "Role Permissions Updated"
 			e.add_field(name="Role", value=str(after), inline=False)
-			add_mod(entry, e)
+			add_mod(entry.user, e)
 			if len(gained) > 0:
 				e.add_field(name="Permissions Gained", value=f"""{' || '.join(gained)}""", inline=False)
 			if len(lost) > 0:
@@ -413,7 +413,7 @@ class Logging(commands.Cog):
 			elif t == "update":
 				action = discord.AuditLogAction.overwrite_update
 			entry = await self.search_entry(after.guild, after, action)
-			add_mod(entry, e)
+			add_mod(entry.user, e)
 			await channel.send(embed=e)
 
 		if before.name != after.name:
@@ -422,7 +422,7 @@ class Logging(commands.Cog):
 			e.add_field(name="Old Name", value=str(before), inline=False)
 			e.add_field(name="New Name", value=str(after), inline=False)
 			entry = await self.search_entry(after.guild, after, discord.AuditLogAction.channel_update)
-			add_mod(entry, e)
+			add_mod(entry.user, e)
 			await channel.send(embed=e)
 
 	@commands.Cog.listener()
@@ -434,7 +434,7 @@ class Logging(commands.Cog):
 		e.title = "Channel Created"
 		e.add_field(name="Channel", value=str(new_channel), inline=False)
 		entry = await self.search_entry(new_channel.guild, new_channel, discord.AuditLogAction.channel_create)
-		add_mod(entry, e)
+		add_mod(entry.user, e)
 		await channel.send(embed=e)
 
 	@commands.Cog.listener()
@@ -446,7 +446,7 @@ class Logging(commands.Cog):
 		e.title = "Channel Deleted"
 		e.add_field(name="Channel", value=str(del_channel), inline=False)
 		entry = await self.search_entry(del_channel.guild, del_channel, discord.AuditLogAction.channel_delete)
-		add_mod(entry, e)
+		add_mod(entry.user, e)
 		await channel.send(embed=e)
 
 	@commands.Cog.listener()
