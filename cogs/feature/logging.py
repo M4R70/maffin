@@ -70,7 +70,7 @@ def member_embed(member, title, color=discord.Colour.blue(), entry=None, mod=Tru
 	e.add_field(name="User ID", value=member.id, inline=False)
 	# e.add_field(name="\u200b", value="\u200b", inline=False)
 	if mod:
-		if mod_user is None:
+		if mod_user is None and entry is not None:
 			add_mod(entry.user, e)
 		else:
 			add_mod(mod_user, e)
