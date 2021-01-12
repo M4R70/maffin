@@ -50,7 +50,7 @@ class Moderation(commands.Cog):
 			reason = None
 
 		self.mod_register[ctx.guild]['AuditLogAction.member_update'][member.id] = ctx.author
-		await self.bot.cogs['Logging'].log_server_mute('Muted', member,reason=reason)
+		await self.bot.cogs['Logging'].log_server_mute('Muted', member,reason=reason,mod=ctx.author)
 		if member.voice is not None:
 			await member.edit(mute=True)
 			await ctx.send(f"{member} was muted :thumbsup:")
@@ -68,7 +68,7 @@ class Moderation(commands.Cog):
 		if reason == "":
 			reason = None
 		self.mod_register[ctx.guild]['AuditLogAction.member_update'][member.id] = ctx.author
-		await self.bot.cogs['Logging'].log_server_mute('Unmuted', member,reason=reason)
+		await self.bot.cogs['Logging'].log_server_mute('Unmuted', member,reason=reason,mod=ctx.author)
 		if member.voice is not None:
 			await member.edit(mute=False)
 			await  ctx.send(f"{member} was unmuted :thumbsup:")
