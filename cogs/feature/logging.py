@@ -156,6 +156,8 @@ class Logging(commands.Cog):
 		entry = None
 		if mod is None:
 			entry = await self.search_entry(member.guild, member, discord.AuditLogAction.member_update)
+			if entry.user == self.bot.user:
+				return
 
 		e = member_embed(member, title=f"{diff}", color=color, entry=entry,mod_user=mod)
 
@@ -461,6 +463,7 @@ class Logging(commands.Cog):
 			return
 
 		elif diff == "Muted" or diff == "Unmuted":
+			await self.log_server_mute(diff, member)
 			return
 
 		else:
