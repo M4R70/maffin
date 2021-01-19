@@ -436,6 +436,8 @@ class Logging(commands.Cog):
 		e.title = "Channel Created"
 		e.add_field(name="Channel", value=str(new_channel), inline=False)
 		entry = await self.search_entry(new_channel.guild, new_channel, discord.AuditLogAction.channel_create)
+		if entry.user.bot:
+			return
 		add_mod(entry.user, e)
 		await channel.send(embed=e)
 
@@ -448,6 +450,8 @@ class Logging(commands.Cog):
 		e.title = "Channel Deleted"
 		e.add_field(name="Channel", value=str(del_channel), inline=False)
 		entry = await self.search_entry(del_channel.guild, del_channel, discord.AuditLogAction.channel_delete)
+		if entry.user.bot:
+			return
 		add_mod(entry.user, e)
 		await channel.send(embed=e)
 
